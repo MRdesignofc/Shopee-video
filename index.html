@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Shop Trends</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <header class="top">
+    <h1>Shop Trends</h1>
+    <input id="search" placeholder="Buscar produto..." />
+    <div class="meta" id="meta"></div>
+  </header>
+
+  <nav id="cats" class="cats"></nav>
+  <main id="grid" class="grid"></main>
+
+  <!-- Modal produto -->
+  <dialog id="modal" class="modal">
+    <div class="modal-content">
+      <button id="close">×</button>
+      <img id="m_img" alt="" />
+      <h2 id="m_title"></h2>
+      <p id="m_price"></p>
+      <div class="actions">
+        <a id="m_buy" target="_blank" rel="noopener">Comprar</a>
+        <a id="m_tiktok" target="_blank" rel="noopener">Ver no TikTok</a>
+        <a id="m_tiktok_search" target="_blank" rel="noopener">Buscar no TikTok</a>
+      </div>
+      <p class="small" id="m_cat"></p>
+    </div>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
