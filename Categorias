@@ -1,0 +1,14 @@
+[
+  {"slug":"vendendo-agora","name":"Vendendo agora"},
+  {"slug":"mais-vendidos","name":"Mais vendidos"},
+  {"slug":"miniaturas","name":"Miniaturas de carrinhos"},
+  {"slug":"beleza","name":"Beleza"},
+  {"slug":"moda-feminina","name":"Moda Feminina"},
+  {"slug":"moda-masculina","name":"Moda Masculina"},
+  {"slug":"infantis","name":"Infantis"},
+  {"slug":"eletronicos","name":"Eletrônicos & Acessórios"},
+  {"slug":"casa","name":"Casa & Decoração"},
+  {"slug":"esportes","name":"Esportes & Fitness"},
+  {"slug":"pet","name":"Pet Shop"},
+  {"slug":"brinquedos","name":"Brinquedos & Hobbies"}
+]
