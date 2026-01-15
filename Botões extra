@@ -1,0 +1,5 @@
+const base = `https://www.tiktok.com/search?q=`;
+document.getElementById("m_tiktok").href = base + encodeURIComponent(`${p.title} review`);
+document.getElementById("m_tiktok_search").href = base + encodeURIComponent(`${p.title} unboxing`);
+document.getElementById("m_tiktok_search").textContent = "Unboxing no TikTok";
+document.getElementById("m_tiktok_search").style.display = "inline-block";
