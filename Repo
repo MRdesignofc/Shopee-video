@@ -1,0 +1,12 @@
+/ (repo)
+  index.html
+  app.js
+  style.css
+  data/
+    products.json
+    categories.json
+  scripts/
+    sync_shopee.py
+  .github/
+    workflows/
+      sync.yml
