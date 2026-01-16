@@ -7,28 +7,72 @@
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-  <header class="top">
-    <h1>Shop Trends</h1>
-    <input id="search" placeholder="Buscar produto..." />
-    <div class="meta" id="meta"></div>
+
+  <header class="header">
+    <div class="wrap header-inner">
+      <a class="brand" href="#" onclick="return false;">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <div>Shop Trends</div>
+          <div class="small">Shopee • Ofertas em alta</div>
+        </div>
+      </a>
+
+      <div class="search" role="search">
+        <input id="search" placeholder="Buscar produto (ex: hot wheels, perfume, fone bluetooth)..." />
+      </div>
+
+      <div class="badge" id="meta">Atualizando...</div>
+    </div>
+
+    <div class="wrap">
+      <nav id="cats" class="cats"></nav>
+    </div>
   </header>
 
-  <nav id="cats" class="cats"></nav>
-  <main id="grid" class="grid"></main>
+  <main class="wrap">
+    <section class="hero">
+      <div class="hero-card">
+        <div>
+          <p class="hero-title">Os produtos mais quentes do dia 🔥</p>
+          <p class="hero-sub">Clique em qualquer item para abrir o link de compra e pesquisar vídeos no TikTok.</p>
+        </div>
+        <div class="hero-cta">
+          <button class="btn" id="btnTop">Ver tudo</button>
+          <button class="btn btn-ghost" id="btnMini">Miniaturas</button>
+        </div>
+      </div>
+    </section>
 
-  <!-- Modal produto -->
+    <section id="grid" class="grid"></section>
+
+    <div class="footer">
+      Dados atualizados automaticamente • Links podem conter afiliado • Use “Buscar no TikTok” para ver vídeos similares
+    </div>
+  </main>
+
+  <!-- Modal -->
   <dialog id="modal" class="modal">
     <div class="modal-content">
-      <button id="close">×</button>
-      <img id="m_img" alt="" />
-      <h2 id="m_title"></h2>
-      <p id="m_price"></p>
-      <div class="actions">
-        <a id="m_buy" target="_blank" rel="noopener">Comprar</a>
-        <a id="m_tiktok" target="_blank" rel="noopener">Ver no TikTok</a>
-        <a id="m_tiktok_search" target="_blank" rel="noopener">Buscar no TikTok</a>
+      <div class="modal-media">
+        <button class="close" id="close" aria-label="Fechar">×</button>
+        <img id="m_img" alt="" />
       </div>
-      <p class="small" id="m_cat"></p>
+
+      <div class="modal-body">
+        <h2 id="m_title"></h2>
+        <div class="mprice" id="m_price"></div>
+        <div class="tag" id="m_cat"></div>
+
+        <div class="actions">
+          <a class="action primary" id="m_buy" target="_blank" rel="noopener">Comprar na Shopee</a>
+          <a class="action secondary" id="m_tiktok" target="_blank" rel="noopener">Buscar no TikTok</a>
+        </div>
+
+        <p class="small" style="margin-top:10px;">
+          Dica: pesquise no TikTok por “review”, “unboxing” e “testando” para achar vídeos mais parecidos.
+        </p>
+      </div>
     </div>
   </dialog>
 
