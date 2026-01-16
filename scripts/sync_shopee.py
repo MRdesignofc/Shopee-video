@@ -113,13 +113,14 @@ def upsert(db, new_items):
   return inserted, updated
 
 def main():
-  if not APP_ID or not SECRET:
-    raise SystemExit("Faltam secrets: SHOPEE_APP_ID / SHOPEE_SECRET")
-    
-os.makedirs("data", exist_ok=True)
-  db = load_db()
+    if not APP_ID or not SECRET:
+        raise SystemExit("Faltam secrets: SHOPEE_APP_ID / SHOPEE_SECRET")
 
-  total_ins = total_upd = 0
+    os.makedirs("data", exist_ok=True)
+    db = load_db()
+
+    total_ins = 0
+    total_upd = 0
 
   for cat in CATALOGS:
     page = 1
