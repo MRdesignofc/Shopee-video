@@ -193,3 +193,16 @@ function escapeHtml(s) {
 }
 
 load();
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+
+const appFb = initializeApp(window.FIREBASE_CONFIG);
+const authFb = getAuth(appFb);
+
+const logoutBtn = document.getElementById("logoutBtn");
+if (logoutBtn) {
+  logoutBtn.onclick = async () => {
+    await signOut(authFb);
+    window.location.replace("login.html");
+  };
+}
