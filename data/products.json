@@ -1,4 +1,9 @@
-{
-  "updatedAt": "2026-01-16 01:07 UTC",
-  "items": []
-}
+"items": [
+  {
+    "source": "shopee_affiliate",
+    "title": "...",
+    "price": ...,
+    "productUrl": "https://shope.ee/...",
+    ...
+  }
+]
