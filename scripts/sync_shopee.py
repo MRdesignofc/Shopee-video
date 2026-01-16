@@ -92,15 +92,18 @@ def shopee_graphql(query: str, variables: dict):
 
 # ⚠️ Substitua pela query REAL do Playground Shopee Affiliate.
 QUERY_PLACEHOLDER = """
-query ProductOfferList($keyword:String!, $page:Int!, $limit:Int!) {
-  productOfferList(keyword:$keyword, page:$page, limit:$limit) {
+query ProductOfferV2($keyword: String!, $page: Int!, $limit: Int!) {
+  productOfferV2(
+    keyword: $keyword
+    page: $page
+    limit: $limit
+  ) {
     items {
       itemId
       itemName
       imageUrl
       price
-      promoPrice
-      productUrl
+      promotionPrice
       offerLink
     }
   }
