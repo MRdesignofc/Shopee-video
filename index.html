@@ -4,10 +4,10 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Shop Trends</title>
-  
+
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="favicon.png">
-  
+
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
@@ -26,7 +26,10 @@
         <input id="search" placeholder="Buscar produto (ex: hot wheels, perfume, fone bluetooth)..." />
       </div>
 
-      <div class="badge" id="meta">Atualizando...</div>
+      <div style="display:flex; gap:10px; align-items:center;">
+        <div class="badge" id="meta">Atualizando...</div>
+        <button class="btn btn-ghost" id="logoutBtn" type="button">Sair</button>
+      </div>
     </div>
 
     <div class="wrap">
@@ -42,8 +45,8 @@
           <p class="hero-sub">Clique em qualquer item para abrir o link de compra e pesquisar vídeos no TikTok.</p>
         </div>
         <div class="hero-cta">
-          <button class="btn" id="btnTop">Ver tudo</button>
-          <button class="btn btn-ghost" id="btnMini">Miniaturas</button>
+          <button class="btn" id="btnTop" type="button">Ver tudo</button>
+          <button class="btn btn-ghost" id="btnMini" type="button">Miniaturas</button>
         </div>
       </div>
     </section>
@@ -80,6 +83,33 @@
     </div>
   </dialog>
 
+  <!-- Firebase config (OBRIGATÓRIO) -->
+  <script src="firebase-config.js"></script>
+
+  <!-- Guard: bloqueia a home sem login (OBRIGATÓRIO) -->
+  <script type="module" src="guard.js"></script>
+
+  <!-- App principal -->
   <script src="app.js"></script>
+
+  <!-- Logout (opcional, mas recomendado) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+
+    const btn = document.getElementById("logoutBtn");
+    if (btn) {
+      const app = initializeApp(window.FIREBASE_CONFIG);
+      const auth = getAuth(app);
+
+      btn.addEventListener("click", async () => {
+        try {
+          await signOut(auth);
+        } finally {
+          window.location.replace("login.html");
+        }
+      });
+    }
+  </script>
 </body>
 </html>
