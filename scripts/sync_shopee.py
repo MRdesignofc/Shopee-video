@@ -14,7 +14,7 @@ SECRET = os.environ.get("SHOPEE_SECRET", "").strip()
 OUT_PATH = "data/products.json"
 DEBUG_PATH = "data/debug_last_response.json"
 
-# Mapeia seus catálogos -> estratégia de busca (keyword)
+
 CATALOGS = [
     {"slug": "miniaturas", "name": "Miniaturas de carrinhos", "keyword": "hot wheels miniatura 1:64 diecast"},
     {"slug": "beleza", "name": "Beleza", "keyword": "skin care maquiagem perfume"},
@@ -29,23 +29,60 @@ CATALOGS = [
 ]
 
 
-def load_db():
-    if not os.path.exists(OUT_PATH):
-        return {"updatedAt": "", "items": []}
-    with open(OUT_PATH, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def save_db(db):
-    db["updatedAt"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    with open(OUT_PATH, "w", encoding="utf-8") as f:
-        json.dump(db, f, ensure_ascii=False, indent=2)
+def ensure_data_dir():
+    os.makedirs("data", exist_ok=True)
 
 
 def save_debug(payload):
-    # Sempre grava debug (sucesso/erro) pra você ver o que a Shopee devolveu
+    ensure_data_dir()
     with open(DEBUG_PATH, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
+
+
+def load_db():
+    """
+    Carrega products.json. Se estiver corrompido, renomeia e recomeça vazio
+    (isso resolve o erro JSONDecodeError: Extra data).
+    """
+    ensure_data_dir()
+
+    if not os.path.exists(OUT_PATH):
+        return {"updatedAt": "", "items": []}
+
+    try:
+        with open(OUT_PATH, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            if not isinstance(data, dict):
+                return {"updatedAt": "", "items": []}
+            if "items" not in data or not isinstance(data["items"], list):
+                data["items"] = []
+            if "updatedAt" not in data or not isinstance(data["updatedAt"], str):
+                data["updatedAt"] = ""
+            return data
+
+    except json.JSONDecodeError as e:
+        # Renomeia o arquivo corrompido para análise e começa limpo
+        bad_path = "data/products.bad.json"
+        try:
+            os.replace(OUT_PATH, bad_path)
+        except Exception:
+            pass
+
+        save_debug(
+            {
+                "status": "products_json_invalid",
+                "error": str(e),
+                "note": f"Arquivo corrompido movido para {bad_path}. Recriando products.json limpo.",
+            }
+        )
+        return {"updatedAt": "", "items": []}
+
+
+def save_db(db):
+    ensure_data_dir()
+    db["updatedAt"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    with open(OUT_PATH, "w", encoding="utf-8") as f:
+        json.dump(db, f, ensure_ascii=False, indent=2)
 
 
 def sign_headers(payload_json: str):
@@ -64,33 +101,25 @@ def shopee_graphql(query: str, variables: dict):
     payload_json = json.dumps(body, separators=(",", ":"), ensure_ascii=False)
     headers = sign_headers(payload_json)
 
+    r = requests.post(
+        SHOPEE_URL,
+        data=payload_json.encode("utf-8"),
+        headers=headers,
+        timeout=60,
+    )
+
+    # salva debug mesmo quando dá erro (pra você enxergar "errors" do GraphQL)
     try:
-        r = requests.post(
-            SHOPEE_URL,
-            data=payload_json.encode("utf-8"),
-            headers=headers,
-            timeout=60,
-        )
-        # Se der erro HTTP, ainda vamos salvar o corpo no debug
-        text = r.text
-        r.raise_for_status()
-        return r.json()
-    except requests.HTTPError as e:
-        # tenta salvar o corpo mesmo em erro
-        save_debug(
-            {
-                "status": "http_error",
-                "error": str(e),
-                "response_text": text if "text" in locals() else None,
-            }
-        )
-        raise
-    except Exception as e:
-        save_debug({"status": "exception", "error": str(e)})
-        raise
+        parsed = r.json()
+    except Exception:
+        parsed = {"status": "non_json_response", "http_status": r.status_code, "text": r.text}
+
+    save_debug(parsed)
+
+    r.raise_for_status()
+    return parsed
 
 
-# ⚠️ Substitua pela query REAL do Playground Shopee Affiliate.
 QUERY_PLACEHOLDER = """
 query ProductOfferV2($keyword: String!, $page: Int!, $limit: Int!) {
   productOfferV2(
@@ -111,6 +140,13 @@ query ProductOfferV2($keyword: String!, $page: Int!, $limit: Int!) {
 """
 
 
+def extract_items_from_response(res: dict):
+    return (
+        (((res.get("data") or {}).get("productOfferV2") or {}).get("items"))
+        or []
+    )
+
+
 def normalize_items(raw_items, cat):
     items = []
     for it in raw_items or []:
@@ -118,21 +154,36 @@ def normalize_items(raw_items, cat):
         if not source_id:
             continue
 
-        price = it.get("price")
-        promo = it.get("promotionPrice") or it.get("promoPrice")
+        title = it.get("itemName") or it.get("name") or it.get("item_name") or "Produto"
+        image_url = it.get("imageUrl") or it.get("image") or it.get("image_url") or ""
+        price = it.get("price") or 0
+        promo = it.get("promotionPrice") or it.get("promoPrice") or None
+        offer_link = it.get("offerLink") or it.get("productUrl") or it.get("link") or ""
+
+        try:
+            price_f = float(price or 0)
+        except Exception:
+            price_f = 0.0
+
+        promo_f = None
+        if promo is not None and promo != "":
+            try:
+                promo_f = float(promo)
+            except Exception:
+                promo_f = None
 
         items.append(
             {
                 "source": "shopee_affiliate",
                 "sourceId": source_id,
-                "title": it.get("itemName") or it.get("name") or it.get("item_name") or "Produto",
-                "imageUrl": it.get("imageUrl") or it.get("image") or it.get("image_url") or "",
-                "price": float(price or 0),
-                "promoPrice": float(promo) if promo else None,
-                "productUrl": it.get("productUrl") or it.get("offerLink") or it.get("link") or "",
+                "title": title,
+                "imageUrl": image_url,
+                "price": price_f,
+                "promoPrice": promo_f,
+                "productUrl": offer_link,
                 "categorySlug": cat["slug"],
                 "categoryName": cat["name"],
-                # Você pode remover isso se quiser só TikTok search (sem curadoria)
+                # Se você quiser só TikTok search, pode remover esse campo do front
                 "tiktokUrl": None,
             }
         )
@@ -140,15 +191,19 @@ def normalize_items(raw_items, cat):
 
 
 def upsert(db, new_items):
-    idx = {(p["source"], p["sourceId"]): i for i, p in enumerate(db.get("items", []))}
+    db.setdefault("items", [])
+    idx = {(p.get("source"), p.get("sourceId")): i for i, p in enumerate(db["items"])}
+
     inserted = 0
     updated = 0
 
     for p in new_items:
-        key = (p["source"], p["sourceId"])
+        key = (p.get("source"), p.get("sourceId"))
+        if not key[0] or not key[1]:
+            continue
+
         if key in idx:
             i = idx[key]
-            # mantém tiktokUrl se já existe
             old_tiktok = db["items"][i].get("tiktokUrl")
             db["items"][i].update(p)
             if old_tiktok:
@@ -161,69 +216,33 @@ def upsert(db, new_items):
     return inserted, updated
 
 
-def extract_items_from_response(res: dict):
-    return (
-        ((res.get("data") or {})
-         .get("productOfferV2") or {})
-        .get("items")
-    ) or []
-    if not isinstance(data, dict) or not data:
-        return []
-
-    # Caso 1: seu caminho original
-    # data.productOfferList.items
-    pol = data.get("productOfferList")
-    if isinstance(pol, dict) and isinstance(pol.get("items"), list):
-        return pol["items"]
-
-    # Caso 2: às vezes pode vir como getProductOfferList / productOfferV2 etc.
-    for key, val in data.items():
-        if isinstance(val, dict) and isinstance(val.get("items"), list):
-            return val["items"]
-
-    # Caso 3: lista direta
-    for key, val in data.items():
-        if isinstance(val, list):
-            return val
-
-    return []
-
-
 def main():
     if not APP_ID or not SECRET:
         raise SystemExit("Faltam secrets: SHOPEE_APP_ID / SHOPEE_SECRET")
 
-    os.makedirs("data", exist_ok=True)
+    ensure_data_dir()
+
     db = load_db()
 
     total_ins = 0
     total_upd = 0
 
-    # grava um debug inicial (ajuda a saber que o script rodou)
-    save_debug({"status": "starting", "ts": datetime.now(timezone.utc).isoformat()})
-
+    # 1 página por categoria por enquanto (aumente depois)
     for cat in CATALOGS:
         page = 1
         limit = 20
 
-        # Por enquanto 1 página por categoria. Aumente depois.
-        for _ in range(1):
-            res = shopee_graphql(
-                QUERY_PLACEHOLDER,
-                {"keyword": cat["keyword"], "page": page, "limit": limit},
-            )
+        res = shopee_graphql(
+            QUERY_PLACEHOLDER,
+            {"keyword": cat["keyword"], "page": page, "limit": limit},
+        )
 
-            # salva a última resposta (debug)
-            save_debug(res)
+        raw_items = extract_items_from_response(res)
+        items = normalize_items(raw_items, cat)
 
-            raw_items = extract_items_from_response(res)
-            items = normalize_items(raw_items, cat)
-
-            ins, upd = upsert(db, items)
-            total_ins += ins
-            total_upd += upd
-
-            page += 1
+        ins, upd = upsert(db, items)
+        total_ins += ins
+        total_upd += upd
 
     save_db(db)
     print(f"OK - inserted={total_ins} updated={total_upd} total={len(db['items'])}")
