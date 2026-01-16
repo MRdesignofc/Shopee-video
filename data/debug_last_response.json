@@ -1,29 +1,16 @@
 {
   "errors": [
     {
-      "message": "Cannot query field \"itemName\" on type \"ProductOfferV2\".",
+      "message": "Cannot query field \"edges\" on type \"ProductOfferConnectionV2\".",
       "locations": [
         {
-          "line": 10,
-          "column": 7
+          "line": 15,
+          "column": 5
         }
       ],
       "extensions": {
         "code": 10010,
-        "message": "Cannot query field \"itemName\" on type \"ProductOfferV2\"."
-      }
-    },
-    {
-      "message": "Cannot query field \"promotionPrice\" on type \"ProductOfferV2\".",
-      "locations": [
-        {
-          "line": 13,
-          "column": 7
-        }
-      ],
-      "extensions": {
-        "code": 10010,
-        "message": "Cannot query field \"promotionPrice\" on type \"ProductOfferV2\"."
+        "message": "Cannot query field \"edges\" on type \"ProductOfferConnectionV2\"."
       }
     }
   ]
