@@ -34,5 +34,6 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add data/products.json
+          git add data/debug_last_response.json || true
           git commit -m "chore: daily sync" || echo "No changes"
           git push
