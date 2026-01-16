@@ -92,24 +92,7 @@
   <!-- App principal -->
   <script src="app.js"></script>
 
-  <!-- Logout (opcional, mas recomendado) -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-    import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-
-    const btn = document.getElementById("logoutBtn");
-    if (btn) {
-      const app = initializeApp(window.FIREBASE_CONFIG);
-      const auth = getAuth(app);
-
-      btn.addEventListener("click", async () => {
-        try {
-          await signOut(auth);
-        } finally {
-          window.location.replace("login.html");
-        }
-      });
-    }
-  </script>
+  <!-- Logout (novo, estável) -->
+  <script type="module" src="logout.js"></script>
 </body>
 </html>
