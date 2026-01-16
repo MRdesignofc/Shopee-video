@@ -1,17 +1,16 @@
 {
-  "errors": [
-    {
-      "message": "Cannot query field \"items\" on type \"ProductOfferConnectionV2\".",
-      "locations": [
+  "data": {
+    "productOfferV2": {
+      "items": [
         {
-          "line": 8,
-          "column": 5
+          "itemId": "...",
+          "itemName": "...",
+          "imageUrl": "...",
+          "price": "...",
+          "promotionPrice": "...",
+          "offerLink": "https://shope.ee/..."
         }
-      ],
-      "extensions": {
-        "code": 10010,
-        "message": "Cannot query field \"items\" on type \"ProductOfferConnectionV2\"."
-      }
+      ]
     }
-  ]
+  }
 }
