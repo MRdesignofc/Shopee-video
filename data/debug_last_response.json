@@ -1,16 +1,16 @@
 {
   "errors": [
     {
-      "message": "Cannot query field \"productOfferList\" on type \"Query\". Did you mean \"productOffer\", or \"productOfferV2\"?",
+      "message": "Cannot query field \"items\" on type \"ProductOfferConnectionV2\".",
       "locations": [
         {
-          "line": 3,
-          "column": 3
+          "line": 8,
+          "column": 5
         }
       ],
       "extensions": {
         "code": 10010,
-        "message": "Cannot query field \"productOfferList\" on type \"Query\". Did you mean \"productOffer\", or \"productOfferV2\"?"
+        "message": "Cannot query field \"items\" on type \"ProductOfferConnectionV2\"."
       }
     }
   ]
