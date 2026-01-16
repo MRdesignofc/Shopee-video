@@ -119,7 +119,7 @@ def normalize_items(raw_items, cat):
             continue
 
         price = it.get("price")
-        promo = it.get("promoPrice") if "promoPrice" in it else it.get("promo_price")
+        promo = it.get("promotionPrice") or it.get("promoPrice")
 
         items.append(
             {
@@ -162,11 +162,11 @@ def upsert(db, new_items):
 
 
 def extract_items_from_response(res: dict):
-    """
-    Tenta achar lista de itens em alguns caminhos comuns,
-    porque o nome do resolver pode variar no schema.
-    """
-    data = (res or {}).get("data") or {}
+    return (
+        ((res.get("data") or {})
+         .get("productOfferV2") or {})
+        .get("items")
+    ) or []
     if not isinstance(data, dict) or not data:
         return []
 
