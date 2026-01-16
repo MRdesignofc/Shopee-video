@@ -122,29 +122,38 @@ def main():
     total_ins = 0
     total_upd = 0
 
-  for cat in CATALOGS:
-    page = 1
-    limit = 20
+    for cat in CATALOGS:
+        page = 1
+        limit = 20
 
-    # Puxa 2 páginas por categoria (ajuste conforme seu limite/necessidade)
-    for _ in range(2):
-      res = shopee_graphql(QUERY_PLACEHOLDER, {"keyword": cat["keyword"], "page": page, "limit": limit})
+        for _ in range(1):
+            res = shopee_graphql(
+                QUERY_PLACEHOLDER,
+                {
+                    "keyword": cat["keyword"],
+                    "page": page,
+                    "limit": limit
+                }
+            )
 
-      with open(DEBUG_PATH, "w", encoding="utf-8") as f:
-    json.dump(res, f, ensure_ascii=False, indent=2)
+            with open(DEBUG_PATH, "w", encoding="utf-8") as f:
+                json.dump(res, f, ensure_ascii=False, indent=2)
 
-      # TODO: ajuste o caminho até a lista real retornada pela sua query
-      raw_items = (((res.get("data") or {}).get("productOfferList") or {}).get("items")) or []
-      items = normalize_items(raw_items, cat)
+            raw_items = (
+                ((res.get("data") or {})
+                 .get("productOfferList") or {})
+                .get("items")
+            ) or []
 
-      ins, upd = upsert(db, items)
-      total_ins += ins
-      total_upd += upd
+            items = normalize_items(raw_items, cat)
+            ins, upd = upsert(db, items)
 
-      page += 1
+            total_ins += ins
+            total_upd += upd
+            page += 1
 
-  save_db(db)
-  print(f"OK - inserted={total_ins} updated={total_upd} total={len(db['items'])}")
+    save_db(db)
+    print(f"OK - inserted={total_ins} updated={total_upd} total={len(db['items'])}")
 
 if __name__ == "__main__":
   main()
