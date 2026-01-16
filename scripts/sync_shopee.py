@@ -14,7 +14,6 @@ SECRET = os.environ.get("SHOPEE_SECRET", "").strip()
 OUT_PATH = "data/products.json"
 DEBUG_PATH = "data/debug_last_response.json"
 
-
 CATALOGS = [
     {"slug": "miniaturas", "name": "Miniaturas de carrinhos", "keyword": "hot wheels miniatura 1:64 diecast"},
     {"slug": "beleza", "name": "Beleza", "keyword": "skin care maquiagem perfume"},
@@ -41,8 +40,8 @@ def save_debug(payload):
 
 def load_db():
     """
-    Carrega products.json. Se estiver corrompido, renomeia e recomeça vazio
-    (isso resolve o erro JSONDecodeError: Extra data).
+    Carrega products.json. Se estiver corrompido, renomeia para products.bad.json e recomeça vazio.
+    Isso resolve: json.decoder.JSONDecodeError: Extra data...
     """
     ensure_data_dir()
 
@@ -52,16 +51,18 @@ def load_db():
     try:
         with open(OUT_PATH, "r", encoding="utf-8") as f:
             data = json.load(f)
-            if not isinstance(data, dict):
-                return {"updatedAt": "", "items": []}
-            if "items" not in data or not isinstance(data["items"], list):
-                data["items"] = []
-            if "updatedAt" not in data or not isinstance(data["updatedAt"], str):
-                data["updatedAt"] = ""
-            return data
+
+        if not isinstance(data, dict):
+            return {"updatedAt": "", "items": []}
+
+        if "items" not in data or not isinstance(data["items"], list):
+            data["items"] = []
+        if "updatedAt" not in data or not isinstance(data["updatedAt"], str):
+            data["updatedAt"] = ""
+
+        return data
 
     except json.JSONDecodeError as e:
-        # Renomeia o arquivo corrompido para análise e começa limpo
         bad_path = "data/products.bad.json"
         try:
             os.replace(OUT_PATH, bad_path)
@@ -108,7 +109,7 @@ def shopee_graphql(query: str, variables: dict):
         timeout=60,
     )
 
-    # salva debug mesmo quando dá erro (pra você enxergar "errors" do GraphQL)
+    # sempre salva a resposta no debug (mesmo se vier "errors")
     try:
         parsed = r.json()
     except Exception:
@@ -116,10 +117,12 @@ def shopee_graphql(query: str, variables: dict):
 
     save_debug(parsed)
 
+    # se for erro HTTP, levanta exceção (mas o debug já ficou salvo)
     r.raise_for_status()
     return parsed
 
 
+# Agora usando Connection (nodes/edges) em vez de items
 QUERY_PLACEHOLDER = """
 query ProductOfferV2($keyword: String!, $page: Int!, $limit: Int!) {
   productOfferV2(
@@ -127,7 +130,7 @@ query ProductOfferV2($keyword: String!, $page: Int!, $limit: Int!) {
     page: $page
     limit: $limit
   ) {
-    items {
+    nodes {
       itemId
       itemName
       imageUrl
@@ -141,10 +144,24 @@ query ProductOfferV2($keyword: String!, $page: Int!, $limit: Int!) {
 
 
 def extract_items_from_response(res: dict):
-    return (
-        (((res.get("data") or {}).get("productOfferV2") or {}).get("items"))
-        or []
-    )
+    data = res.get("data") or {}
+    conn = data.get("productOfferV2") or {}
+
+    # Caso 1: nodes
+    nodes = conn.get("nodes")
+    if isinstance(nodes, list):
+        return nodes
+
+    # Caso 2: edges -> node
+    edges = conn.get("edges")
+    if isinstance(edges, list):
+        out = []
+        for e in edges:
+            if isinstance(e, dict) and isinstance(e.get("node"), dict):
+                out.append(e["node"])
+        return out
+
+    return []
 
 
 def normalize_items(raw_items, cat):
@@ -156,9 +173,10 @@ def normalize_items(raw_items, cat):
 
         title = it.get("itemName") or it.get("name") or it.get("item_name") or "Produto"
         image_url = it.get("imageUrl") or it.get("image") or it.get("image_url") or ""
+        offer_link = it.get("offerLink") or it.get("productUrl") or it.get("link") or ""
+
         price = it.get("price") or 0
         promo = it.get("promotionPrice") or it.get("promoPrice") or None
-        offer_link = it.get("offerLink") or it.get("productUrl") or it.get("link") or ""
 
         try:
             price_f = float(price or 0)
@@ -183,10 +201,11 @@ def normalize_items(raw_items, cat):
                 "productUrl": offer_link,
                 "categorySlug": cat["slug"],
                 "categoryName": cat["name"],
-                # Se você quiser só TikTok search, pode remover esse campo do front
+                # Se você quiser somente link de busca no TikTok, esse campo pode ficar sempre null
                 "tiktokUrl": None,
             }
         )
+
     return items
 
 
@@ -223,11 +242,10 @@ def main():
     ensure_data_dir()
 
     db = load_db()
-
     total_ins = 0
     total_upd = 0
 
-    # 1 página por categoria por enquanto (aumente depois)
+    # 1 página por categoria (aumente para 2-5 depois)
     for cat in CATALOGS:
         page = 1
         limit = 20
@@ -236,6 +254,10 @@ def main():
             QUERY_PLACEHOLDER,
             {"keyword": cat["keyword"], "page": page, "limit": limit},
         )
+
+        # Se vier errors no GraphQL, não quebra o script; apenas não adiciona itens
+        if isinstance(res, dict) and "errors" in res:
+            continue
 
         raw_items = extract_items_from_response(res)
         items = normalize_items(raw_items, cat)
