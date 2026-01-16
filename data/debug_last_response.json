@@ -1,16 +1,29 @@
 {
   "errors": [
     {
-      "message": "Cannot query field \"items\" on type \"ProductOfferConnectionV2\".",
+      "message": "Cannot query field \"itemName\" on type \"ProductOfferV2\".",
       "locations": [
         {
-          "line": 8,
-          "column": 5
+          "line": 10,
+          "column": 7
         }
       ],
       "extensions": {
         "code": 10010,
-        "message": "Cannot query field \"items\" on type \"ProductOfferConnectionV2\"."
+        "message": "Cannot query field \"itemName\" on type \"ProductOfferV2\"."
+      }
+    },
+    {
+      "message": "Cannot query field \"promotionPrice\" on type \"ProductOfferV2\".",
+      "locations": [
+        {
+          "line": 13,
+          "column": 7
+        }
+      ],
+      "extensions": {
+        "code": 10010,
+        "message": "Cannot query field \"promotionPrice\" on type \"ProductOfferV2\"."
       }
     }
   ]
