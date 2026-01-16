@@ -192,7 +192,6 @@ function escapeHtml(s) {
     .replaceAll(">", "&gt;");
 }
 
-load();
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
 import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
 
@@ -206,3 +205,5 @@ if (logoutBtn) {
     window.location.replace("login.html");
   };
 }
+
+load();
