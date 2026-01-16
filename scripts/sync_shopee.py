@@ -115,8 +115,10 @@ def upsert(db, new_items):
 def main():
   if not APP_ID or not SECRET:
     raise SystemExit("Faltam secrets: SHOPEE_APP_ID / SHOPEE_SECRET")
-
+    
+os.makedirs("data", exist_ok=True)
   db = load_db()
+
   total_ins = total_upd = 0
 
   for cat in CATALOGS:
@@ -126,6 +128,9 @@ def main():
     # Puxa 2 páginas por categoria (ajuste conforme seu limite/necessidade)
     for _ in range(2):
       res = shopee_graphql(QUERY_PLACEHOLDER, {"keyword": cat["keyword"], "page": page, "limit": limit})
+
+      with open(DEBUG_PATH, "w", encoding="utf-8") as f:
+    json.dump(res, f, ensure_ascii=False, indent=2)
 
       # TODO: ajuste o caminho até a lista real retornada pela sua query
       raw_items = (((res.get("data") or {}).get("productOfferList") or {}).get("items")) or []
