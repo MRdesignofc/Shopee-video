@@ -127,9 +127,16 @@ def main():
 
     # Puxa 2 páginas por categoria (ajuste conforme seu limite/necessidade)
     for _ in range(2):
-      res = shopee_graphql(QUERY_PLACEHOLDER, {"keyword": cat["keyword"], "page": page, "limit": limit})
-      
-      with open(DEBUG_PATH, "w", encoding="utf-8") as f:
+      res = shopee_graphql(
+    QUERY_PLACEHOLDER,
+    {
+        "keyword": cat["keyword"],
+        "page": page,
+        "limit": limit
+    }
+)
+
+with open(DEBUG_PATH, "w", encoding="utf-8") as f:
     json.dump(res, f, ensure_ascii=False, indent=2)
 
       # TODO: ajuste o caminho até a lista real retornada pela sua query
