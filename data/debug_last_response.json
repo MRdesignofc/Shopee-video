@@ -1,17 +1,29 @@
 {
-  "errors": [
-    {
-      "message": "Cannot query field \"edges\" on type \"ProductOfferConnectionV2\".",
-      "locations": [
+  "data": {
+    "productOfferV2": {
+      "nodes": [
         {
-          "line": 15,
-          "column": 5
+          "itemId": 47503162557,
+          "productName": "Compatível com blocos de construção de carro de fórmula Lego Banki F1 Play Puzzle Assembly Pacote adulto Presente de atu",
+          "imageUrl": "https://cf.shopee.com.br/file/sg-11134202-822xs-mib7allrytc698",
+          "price": "643.9",
+          "offerLink": "https://s.shopee.com.br/6KyE0vahR0"
+        },
+        {
+          "itemId": 54153175011,
+          "productName": "Compatível com Lego F1 Formula Car Ferrari Puzzle Montagem de blocos de construção Controle Remoto Carro esportivo Brinq",
+          "imageUrl": "https://cf.shopee.com.br/file/sg-11134202-822zx-mibgc8w5dvyffb",
+          "price": "597.1",
+          "offerLink": "https://s.shopee.com.br/6VHeDEa463"
+        },
+        {
+          "itemId": 42277276284,
+          "productName": "Compatível com Lego Mechanic Group Series Red Bull F1 Super Racing Ferrari SF-24 Puzzle Montagem de blocos de construção",
+          "imageUrl": "https://cf.shopee.com.br/file/sg-11134202-822x4-mib66rcmobuq15",
+          "price": "649.75",
+          "offerLink": "https://s.shopee.com.br/6fb4PXZQl6"
         }
-      ],
-      "extensions": {
-        "code": 10010,
-        "message": "Cannot query field \"edges\" on type \"ProductOfferConnectionV2\"."
-      }
+      ]
     }
-  ]
+  }
 }
