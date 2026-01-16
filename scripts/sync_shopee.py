@@ -41,7 +41,7 @@ def save_debug(payload: Any):
 
 def load_db() -> Dict[str, Any]:
     """
-    Lê products.json. Se estiver inválido, renomeia para products.bad.json e recomeça limpo.
+    Lê products.json. Se estiver inválido, renomeia e recomeça vazio.
     """
     ensure_data_dir()
 
@@ -101,37 +101,31 @@ def shopee_graphql(query: str, variables: Optional[dict] = None) -> Dict[str, An
         timeout=60,
     )
 
-    # sempre salva a resposta no debug (mesmo se vier "errors")
     try:
         parsed = r.json()
     except Exception:
         parsed = {"status": "non_json_response", "http_status": r.status_code, "text": r.text}
 
+    # sempre salva a última resposta no debug
     save_debug(parsed)
 
     r.raise_for_status()
     return parsed
 
 
-# ---------- INTROSPECÇÃO (descobrir campos reais) ----------
+# --- Introspecção: descobrir campos reais do tipo ProductOfferV2 ---
 
 INTROSPECT_TYPE_QUERY = """
 query IntrospectType($name: String!) {
   __type(name: $name) {
     name
-    fields {
-      name
-    }
+    fields { name }
   }
 }
 """
 
 
 def get_type_fields(type_name: str) -> Optional[List[str]]:
-    """
-    Retorna lista de campos do tipo GraphQL, se introspecção estiver liberada.
-    Se estiver bloqueada, retorna None.
-    """
     try:
         res = shopee_graphql(INTROSPECT_TYPE_QUERY, {"name": type_name})
         if "errors" in res:
@@ -159,9 +153,8 @@ def pick_first_existing(fields: List[str], candidates: List[str]) -> Optional[st
 
 def build_product_offer_v2_query(product_fields: List[str]) -> str:
     """
-    Monta query usando nodes { ... } com campos que EXISTEM no schema.
+    Monta query usando SOMENTE nodes (sem edges).
     """
-    # candidatos comuns (variantes possíveis no schema)
     id_field = pick_first_existing(product_fields, ["itemId", "item_id", "id"])
     name_field = pick_first_existing(product_fields, ["itemName", "name", "title", "productName", "itemTitle"])
     image_field = pick_first_existing(product_fields, ["imageUrl", "image", "image_url", "cover", "coverImage"])
@@ -169,8 +162,6 @@ def build_product_offer_v2_query(product_fields: List[str]) -> str:
     promo_field = pick_first_existing(product_fields, ["promotionPrice", "promoPrice", "discountPrice", "finalPrice"])
     link_field = pick_first_existing(product_fields, ["offerLink", "productUrl", "link", "shortLink", "url"])
 
-    # fallbacks seguros (pra não quebrar a query)
-    # se algum campo não existir, a gente simplesmente não pede ele
     selection = []
     if id_field:
         selection.append(id_field)
@@ -185,7 +176,6 @@ def build_product_offer_v2_query(product_fields: List[str]) -> str:
     if link_field:
         selection.append(link_field)
 
-    # Se por algum motivo a introspecção veio muito “seca”, garantimos ao menos 1 campo
     if not selection:
         selection = ["__typename"]
 
@@ -193,18 +183,9 @@ def build_product_offer_v2_query(product_fields: List[str]) -> str:
 
     return f"""
 query ProductOfferV2($keyword: String!, $page: Int!, $limit: Int!) {{
-  productOfferV2(
-    keyword: $keyword
-    page: $page
-    limit: $limit
-  ) {{
+  productOfferV2(keyword: $keyword, page: $page, limit: $limit) {{
     nodes {{
       {selection_block}
-    }}
-    edges {{
-      node {{
-        {selection_block}
-      }}
     }}
   }}
 }}
@@ -214,19 +195,9 @@ query ProductOfferV2($keyword: String!, $page: Int!, $limit: Int!) {{
 def extract_items_from_response(res: Dict[str, Any]) -> List[Dict[str, Any]]:
     data = (res.get("data") or {})
     conn = (data.get("productOfferV2") or {})
-
     nodes = conn.get("nodes")
     if isinstance(nodes, list):
         return [x for x in nodes if isinstance(x, dict)]
-
-    edges = conn.get("edges")
-    if isinstance(edges, list):
-        out = []
-        for e in edges:
-            if isinstance(e, dict) and isinstance(e.get("node"), dict):
-                out.append(e["node"])
-        return out
-
     return []
 
 
@@ -238,17 +209,9 @@ def to_float(x: Any) -> float:
 
 
 def normalize_items(raw_items: List[Dict[str, Any]], cat: Dict[str, str]) -> List[Dict[str, Any]]:
-    """
-    Normaliza qualquer variação de campos para o formato do seu site.
-    Se não existir nome, usa fallback "Item <id>".
-    """
     out = []
-
     for it in raw_items or []:
-        # id
-        source_id = (
-            str(it.get("itemId") or it.get("item_id") or it.get("id") or "")
-        ).strip()
+        source_id = str(it.get("itemId") or it.get("item_id") or it.get("id") or "").strip()
         if not source_id:
             continue
 
@@ -279,21 +242,8 @@ def normalize_items(raw_items: List[Dict[str, Any]], cat: Dict[str, str]) -> Lis
             or ""
         )
 
-        price = (
-            it.get("price")
-            or it.get("minPrice")
-            or it.get("salePrice")
-            or it.get("currentPrice")
-            or 0
-        )
-
-        promo = (
-            it.get("promotionPrice")
-            or it.get("promoPrice")
-            or it.get("discountPrice")
-            or it.get("finalPrice")
-            or None
-        )
+        price = it.get("price") or it.get("minPrice") or it.get("salePrice") or it.get("currentPrice") or 0
+        promo = it.get("promotionPrice") or it.get("promoPrice") or it.get("discountPrice") or it.get("finalPrice") or None
 
         out.append(
             {
@@ -306,10 +256,9 @@ def normalize_items(raw_items: List[Dict[str, Any]], cat: Dict[str, str]) -> Lis
                 "productUrl": str(product_url),
                 "categorySlug": cat["slug"],
                 "categoryName": cat["name"],
-                "tiktokUrl": None,  # você usa busca no TikTok pelo nome no front
+                "tiktokUrl": None,
             }
         )
-
     return out
 
 
@@ -344,22 +293,16 @@ def main():
         raise SystemExit("Faltam secrets: SHOPEE_APP_ID / SHOPEE_SECRET")
 
     ensure_data_dir()
-
-    # 1) Carrega db local
     db = load_db()
 
-    # 2) Descobre campos reais do schema
     product_fields = get_type_fields("ProductOfferV2")
 
-    # 3) Se introspecção estiver bloqueada, usa um fallback minimalista que não costuma quebrar
-    #    (e ainda assim salva debug com os errors para ajustarmos)
+    # Se introspecção estiver bloqueada, usa fallback mínimo SEM edges.
     if not product_fields:
-        # fallback: tenta campos mais "prováveis", mas sem travar o script (se der erro, debug mostra)
         query = """
 query ProductOfferV2($keyword: String!, $page: Int!, $limit: Int!) {
   productOfferV2(keyword: $keyword, page: $page, limit: $limit) {
     nodes { itemId offerLink imageUrl price }
-    edges { node { itemId offerLink imageUrl price } }
   }
 }
 """
@@ -369,12 +312,10 @@ query ProductOfferV2($keyword: String!, $page: Int!, $limit: Int!) {
     total_ins = 0
     total_upd = 0
 
-    # 4) Sincroniza (1 página por categoria por enquanto)
     for cat in CATALOGS:
         variables = {"keyword": cat["keyword"], "page": 1, "limit": 20}
         res = shopee_graphql(query, variables)
 
-        # se vier errors, apenas pula (sem quebrar) — debug já fica salvo
         if isinstance(res, dict) and "errors" in res:
             continue
 
