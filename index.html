@@ -27,7 +27,8 @@
       </div>
 
       <div style="display:flex; gap:10px; align-items:center;">
-        <div class="badge" id="meta">Atualizando...</div>
+        <!-- ✅ Ajustado: products-live.js usa updateStatus -->
+        <div class="badge" id="updateStatus">Atualizando...</div>
         <button class="btn btn-ghost" id="logoutBtn" type="button">Sair</button>
       </div>
     </div>
@@ -51,6 +52,65 @@
       </div>
     </section>
 
+    <!-- ✅ Controles e vitrines dentro do main (antes estava fora) -->
+    <section class="controls">
+      <div class="controls__left">
+        <input id="q" class="input" type="search" placeholder="Buscar produto..." autocomplete="off" />
+        <select id="cat" class="select">
+          <option value="all">Todas categorias</option>
+        </select>
+        <select id="sort" class="select">
+          <option value="trending">Vendendo agora</option>
+          <option value="bestsellers">Mais vendidos</option>
+          <option value="discount">Maior desconto</option>
+          <option value="price_asc">Menor preço</option>
+          <option value="price_desc">Maior preço</option>
+          <option value="rating">Melhor avaliação</option>
+        </select>
+      </div>
+
+      <div class="controls__right">
+        <button id="toggleView" class="btn btn--ghost" type="button" aria-pressed="false">
+          Miniaturas
+        </button>
+        <button id="onlyFav" class="btn btn--ghost" type="button" aria-pressed="false">
+          Favoritos
+        </button>
+      </div>
+    </section>
+
+    <section class="shelves">
+      <div class="shelf">
+        <div class="shelf__head">
+          <h2 class="shelf__title">Vendendo agora</h2>
+          <span class="shelf__hint" id="updatedHint">—</span>
+        </div>
+        <div class="grid" id="gridTrending"></div>
+      </div>
+
+      <div class="shelf">
+        <div class="shelf__head">
+          <h2 class="shelf__title">Mais vendidos</h2>
+        </div>
+        <div class="grid" id="gridBest"></div>
+      </div>
+
+      <div class="shelf">
+        <div class="shelf__head">
+          <h2 class="shelf__title">Ofertas</h2>
+        </div>
+        <div class="grid" id="gridDeals"></div>
+      </div>
+    </section>
+
+    <section class="all">
+      <div class="shelf__head">
+        <h2 class="shelf__title">Ver tudo</h2>
+      </div>
+      <div class="grid" id="gridAll"></div>
+    </section>
+
+    <!-- (Opcional) Grid antigo: mantenha apenas se seu app.js usa #grid -->
     <section id="grid" class="grid"></section>
 
     <div class="footer">
@@ -83,73 +143,20 @@
     </div>
   </dialog>
 
-  <!-- Firebase config (OBRIGATÓRIO) -->
-  <script src="firebase-config.js"></script>
+  <!-- Firebase config (global) -->
+  <script src="./firebase-config.js"></script>
 
-  <!-- Guard: bloqueia a home sem login (OBRIGATÓRIO) -->
-  <script type="module" src="guard.js"></script>
+  <!-- Guard: bloqueia a home sem login -->
+  <script type="module" src="./guard.js"></script>
 
-  <!-- App principal -->
-  <script src="app.js"></script>
+  <!-- ✅ App principal como módulo -->
+  <script type="module" src="./app.js"></script>
 
-  <!-- Logout (novo, estável) -->
-  <script type="module" src="logout.js"></script>
-  <section class="controls">
-  <div class="controls__left">
-    <input id="q" class="input" type="search" placeholder="Buscar produto..." autocomplete="off" />
-    <select id="cat" class="select">
-      <option value="all">Todas categorias</option>
-    </select>
-    <select id="sort" class="select">
-      <option value="trending">Vendendo agora</option>
-      <option value="bestsellers">Mais vendidos</option>
-      <option value="discount">Maior desconto</option>
-      <option value="price_asc">Menor preço</option>
-      <option value="price_desc">Maior preço</option>
-      <option value="rating">Melhor avaliação</option>
-    </select>
-  </div>
+  <!-- Logout -->
+  <script type="module" src="./logout.js"></script>
 
-  <div class="controls__right">
-    <button id="toggleView" class="btn btn--ghost" type="button" aria-pressed="false">
-      Miniaturas
-    </button>
-    <button id="onlyFav" class="btn btn--ghost" type="button" aria-pressed="false">
-      Favoritos
-    </button>
-  </div>
-</section>
-
-<section class="shelves">
-  <div class="shelf">
-    <div class="shelf__head">
-      <h2 class="shelf__title">Vendendo agora</h2>
-      <span class="shelf__hint" id="updatedHint">—</span>
-    </div>
-    <div class="grid" id="gridTrending"></div>
-  </div>
-
-  <div class="shelf">
-    <div class="shelf__head">
-      <h2 class="shelf__title">Mais vendidos</h2>
-    </div>
-    <div class="grid" id="gridBest"></div>
-  </div>
-
-  <div class="shelf">
-    <div class="shelf__head">
-      <h2 class="shelf__title">Ofertas</h2>
-    </div>
-    <div class="grid" id="gridDeals"></div>
-  </div>
-</section>
-
-<section class="all">
-  <div class="shelf__head">
-    <h2 class="shelf__title">Ver tudo</h2>
-  </div>
-  <div class="grid" id="gridAll"></div>
-</section>
+  <!-- Atualização automática de produtos -->
   <script src="./products-live.js"></script>
+
 </body>
 </html>
