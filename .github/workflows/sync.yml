@@ -18,10 +18,11 @@ jobs:
         with:
           node-version: 20
 
-      - name: Update products
-        run: node scripts/update-products.js
-        env:
-          PRODUCTS_FEED_URL: ${{ secrets.PRODUCTS_FEED_URL }}
+  - name: Update products
+    run: node scripts/update-products.js
+    env:
+      SHOPEE_APP_ID: ${{ secrets.SHOPEE_APP_ID }}
+      SHOPEE_SECRET: ${{ secrets.SHOPEE_SECRET }}
 
       - name: Commit changes
         run: |
