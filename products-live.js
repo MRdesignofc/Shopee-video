@@ -1,6 +1,5 @@
-// products-live.js (ANTI-LOOP / SINGLETON)
+// products-live.js (ANTI-LOOP / SINGLETON COMPLETO)
 (() => {
-  // Se este arquivo for carregado 2x, ele não reinicia
   if (window.__shopTrendsLiveUpdater?.started) {
     console.warn("[ShopTrends] Updater já iniciado. Ignorando duplicata.");
     return;
@@ -21,8 +20,11 @@
   const keyOf = (p) => `${p.source}:${p.sourceId}`;
 
   function loadCache() {
-    try { return JSON.parse(localStorage.getItem(updater.CACHE_KEY) || "[]"); }
-    catch { return []; }
+    try {
+      return JSON.parse(localStorage.getItem(updater.CACHE_KEY) || "[]");
+    } catch {
+      return [];
+    }
   }
 
   function saveCache(list) {
@@ -40,25 +42,24 @@
       const cached = loadCache();
       const cachedKeys = new Set(cached.map(keyOf));
 
-      // cache-buster obrigatório
       const res = await fetch(`${updater.PRODUCTS_URL}?t=${Date.now()}`, { cache: "no-store" });
       if (!res.ok) throw new Error("Falha ao carregar products.json");
-      const data = await res.json();
 
+      const data = await res.json();
       const items = Array.isArray(data.items) ? data.items : [];
 
-      const newOnes = items.filter(p => !cachedKeys.has(keyOf(p)));
+      const newOnes = items.filter((p) => !cachedKeys.has(keyOf(p)));
 
-      const map = new Map(cached.map(p => [keyOf(p), p]));
+      const map = new Map(cached.map((p) => [keyOf(p), p]));
       for (const p of items) map.set(keyOf(p), p);
 
       const merged = Array.from(map.values()).sort(
-        (a,b) => (Date.parse(b.addedAt || 0) || 0) - (Date.parse(a.addedAt || 0) || 0)
+        (a, b) =>
+          (Date.parse(b.addedAt || 0) || 0) - (Date.parse(a.addedAt || 0) || 0)
       );
 
       saveCache(merged);
 
-      // Render só desenha; não pode buscar produtos dentro dele
       if (typeof window.renderProducts === "function") {
         window.renderProducts(merged);
       }
@@ -66,7 +67,7 @@
       if (status) {
         status.textContent = newOnes.length
           ? `✅ ${newOnes.length} novos produtos adicionados`
-          : `✅ Atualizado`;
+          : "✅ Atualizado";
       }
     } catch (e) {
       console.error(e);
@@ -74,4 +75,12 @@
     } finally {
       updater.inFlight = false;
 
-      // agenda o p
+      if (updater.timer) clearTimeout(updater.timer);
+      updater.timer = setTimeout(refreshOnce, updater.POLL_MS);
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    refreshOnce();
+  });
+})();
