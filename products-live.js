@@ -72,8 +72,7 @@
       if (!k || k.endsWith(":")) continue;
 
       const prev = map.get(k);
-      // preserva addedAt se já existia
-      const addedAt = prev?.addedAt || p.addedAt || null;
+      const addedAt = prev?.addedAt || p.addedAt || null; // ✅ não tenta converter updatedAt (formato não ISO)
 
       map.set(k, { ...prev, ...p, addedAt });
     }
@@ -97,45 +96,48 @@
       const cached = loadCache();
       const cachedKeys = new Set(cached.map(keyOf));
 
-      const { data } = await loadProductsJson();
+      const { url, data } = await loadProductsJson();
 
-      const updatedAt = data.updatedAt || data.updatedAtTop || null;
+      const updatedAt = data.updatedAt || null;
       const items = Array.isArray(data.items) ? data.items : [];
 
-      // normaliza o mínimo pra garantir chave
-      const incoming = items.map((p) => ({
-        ...p,
-        source: p.source || "shopee_affiliate",
-        sourceId: String(p.sourceId ?? ""),
-        addedAt: p.addedAt || (updatedAt ? new Date(updatedAt).toISOString?.() : null) || null,
-      })).filter((p) => p.sourceId);
+      // normaliza o mínimo
+      const incoming = items
+        .map((p) => ({
+          ...p,
+          source: p.source || "shopee_affiliate",
+          sourceId: String(p.sourceId ?? ""),
+          addedAt: p.addedAt || null,
+        }))
+        .filter((p) => p.sourceId);
 
       const newOnes = incoming.filter((p) => !cachedKeys.has(keyOf(p)));
 
       const merged = mergeAndSort(cached, incoming);
       saveCache(merged);
 
-      // renderiza na UI
+      // renderiza na UI (app.js precisa expor window.renderProducts)
       if (typeof window.renderProducts === "function") {
         window.renderProducts(merged);
       }
 
-      if (updatedAt) {
-        statusText(
-          newOnes.length
-            ? `✅ ${newOnes.length} novos • Atualizado: ${updatedAt}`
-            : `✅ Atualizado: ${updatedAt}`
-        );
-      } else {
-        statusText(newOnes.length ? `✅ ${newOnes.length} novos produtos` : "✅ Atualizado");
-      }
+      statusText(
+        updatedAt
+          ? (newOnes.length
+              ? `✅ ${newOnes.length} novos • Atualizado: ${updatedAt}`
+              : `✅ Atualizado: ${updatedAt}`)
+          : (newOnes.length ? `✅ ${newOnes.length} novos produtos` : "✅ Atualizado")
+      );
+
+      // debug opcional (descomente se precisar)
+      // console.log("[ShopTrends] fonte:", url, "items:", items.length, "novos:", newOnes.length);
+
     } catch (e) {
       console.error(e);
       statusText("❌ Erro ao atualizar produtos");
     } finally {
       updater.inFlight = false;
 
-      // agenda próxima atualização só depois que terminar
       if (updater.timer) clearTimeout(updater.timer);
       updater.timer = setTimeout(refreshOnce, updater.POLL_MS);
     }
