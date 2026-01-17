@@ -94,5 +94,61 @@
 
   <!-- Logout (novo, estável) -->
   <script type="module" src="logout.js"></script>
+  <section class="controls">
+  <div class="controls__left">
+    <input id="q" class="input" type="search" placeholder="Buscar produto..." autocomplete="off" />
+    <select id="cat" class="select">
+      <option value="all">Todas categorias</option>
+    </select>
+    <select id="sort" class="select">
+      <option value="trending">Vendendo agora</option>
+      <option value="bestsellers">Mais vendidos</option>
+      <option value="discount">Maior desconto</option>
+      <option value="price_asc">Menor preço</option>
+      <option value="price_desc">Maior preço</option>
+      <option value="rating">Melhor avaliação</option>
+    </select>
+  </div>
+
+  <div class="controls__right">
+    <button id="toggleView" class="btn btn--ghost" type="button" aria-pressed="false">
+      Miniaturas
+    </button>
+    <button id="onlyFav" class="btn btn--ghost" type="button" aria-pressed="false">
+      Favoritos
+    </button>
+  </div>
+</section>
+
+<section class="shelves">
+  <div class="shelf">
+    <div class="shelf__head">
+      <h2 class="shelf__title">Vendendo agora</h2>
+      <span class="shelf__hint" id="updatedHint">—</span>
+    </div>
+    <div class="grid" id="gridTrending"></div>
+  </div>
+
+  <div class="shelf">
+    <div class="shelf__head">
+      <h2 class="shelf__title">Mais vendidos</h2>
+    </div>
+    <div class="grid" id="gridBest"></div>
+  </div>
+
+  <div class="shelf">
+    <div class="shelf__head">
+      <h2 class="shelf__title">Ofertas</h2>
+    </div>
+    <div class="grid" id="gridDeals"></div>
+  </div>
+</section>
+
+<section class="all">
+  <div class="shelf__head">
+    <h2 class="shelf__title">Ver tudo</h2>
+  </div>
+  <div class="grid" id="gridAll"></div>
+</section>
 </body>
 </html>
