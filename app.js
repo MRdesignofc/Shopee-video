@@ -1,4 +1,3 @@
-// app.js (vitrines) - FINAL: "Ver tudo" com infinite scroll + sem tags no modo Todos
 let ALL = [];
 let CATS = [];
 let activeCat = null;
@@ -6,7 +5,7 @@ let activeCat = null;
 let viewCompact = false;
 let onlyFav = false;
 
-// "Ver tudo"
+// "Ver tudo" com paginação
 let allFiltered = [];
 let allRenderedCount = 0;
 const PAGE_SIZE = 60;
@@ -55,23 +54,12 @@ function openModal(p) {
   const modal = document.getElementById("modal");
   if (!modal) return;
 
-  const img = document.getElementById("m_img");
-  const title = document.getElementById("m_title");
-  const price = document.getElementById("m_price");
-  const buy = document.getElementById("m_buy");
-  const cat = document.getElementById("m_cat");
-  const tiktok = document.getElementById("m_tiktok");
-
-  if (img) img.src = p.imageUrl || "";
-  if (title) title.textContent = p.title || "Produto";
-  if (price) price.textContent = fmtBRL(p.promoPrice ?? p.price);
-  if (buy) buy.href = p.productUrl || "#";
-  if (cat) cat.textContent = p.categoryName || "";
-
-  if (tiktok) {
-    tiktok.href = p.tiktokUrl || buildTikTokUrl(p.title || "produto shopee");
-  }
-
+  document.getElementById("m_img").src = p.imageUrl || "";
+  document.getElementById("m_title").textContent = p.title || "Produto";
+  document.getElementById("m_price").textContent = fmtBRL(p.promoPrice ?? p.price);
+  document.getElementById("m_buy").href = p.productUrl || "#";
+  document.getElementById("m_cat").textContent = p.categoryName || "";
+  document.getElementById("m_tiktok").href = p.tiktokUrl || buildTikTokUrl(p.title || "produto");
   modal.showModal();
 }
 
@@ -98,19 +86,9 @@ function makeCard(p, { showCategoryTag }) {
       <div class="price-row" style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;">
         <div>
           <p class="price" style="margin:0;">${fmtBRL(promo ?? p.price)}</p>
-          ${
-            showOld
-              ? `<span class="small" style="text-decoration:line-through;opacity:.7;">${fmtBRL(
-                  p.price
-                )}</span>`
-              : ""
-          }
+          ${showOld ? `<span class="small" style="text-decoration:line-through;opacity:.7;">${fmtBRL(p.price)}</span>` : ""}
         </div>
-        ${
-          pct != null
-            ? `<span class="badge" style="background:rgba(238,77,45,.08);color:#ee4d2d;border:1px solid rgba(238,77,45,.25)">-${pct}%</span>`
-            : ""
-        }
+        ${pct != null ? `<span class="badge" style="background:rgba(238,77,45,.08);color:#ee4d2d;border:1px solid rgba(238,77,45,.25)">-${pct}%</span>` : ""}
       </div>
 
       ${showCategoryTag ? `<div class="tag">${escapeHtml(p.categoryName || "")}</div>` : ""}
@@ -125,29 +103,19 @@ function makeCard(p, { showCategoryTag }) {
   const btnVer = card.querySelectorAll("button")[0];
   const btnFav = card.querySelectorAll("button")[1];
 
-  btnVer.addEventListener("click", (e) => {
-    e.stopPropagation();
-    openModal(p);
-  });
-
+  btnVer.addEventListener("click", (e) => { e.stopPropagation(); openModal(p); });
   btnFav.addEventListener("click", (e) => {
     e.stopPropagation();
     const set = getFavs();
     const k = p.sourceId;
-    if (set.has(k)) set.delete(k);
-    else set.add(k);
+    if (set.has(k)) set.delete(k); else set.add(k);
     setFavs(set);
-    // re-render tudo (mantém scroll load)
-    renderAll();
+    renderAll(); // mantém estado e re-renderiza
   });
 
-  const open = () => openModal(p);
-  card.addEventListener("click", open);
+  card.addEventListener("click", () => openModal(p));
   card.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      open();
-    }
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openModal(p); }
   });
 
   return card;
@@ -162,27 +130,28 @@ function fillGridFixed(id, items, limit, cardOpts) {
   grid.classList.toggle("is-compact", viewCompact);
 }
 
-function ensureSentinel() {
-  const grid = document.getElementById("gridAll");
-  if (!grid) return null;
+/* ====== VER TUDO (Carregar mais) ====== */
+function updateLoadMoreUI() {
+  const btn = document.getElementById("loadMoreBtn");
+  const info = document.getElementById("loadMoreInfo");
+  if (!btn) return;
 
-  let sentinel = document.getElementById("gridAllSentinel");
-  if (!sentinel) {
-    sentinel = document.createElement("div");
-    sentinel.id = "gridAllSentinel";
-    sentinel.style.height = "1px";
-    sentinel.style.width = "100%";
-    grid.insertAdjacentElement("afterend", sentinel);
-  }
-  return sentinel;
+  const total = allFiltered.length;
+  const shown = Math.min(allRenderedCount, total);
+
+  if (info) info.textContent = `Exibindo ${shown}/${total}`;
+
+  const hasMore = shown < total;
+  btn.style.display = hasMore ? "inline-flex" : "none";
 }
 
 function resetGridAll() {
   const grid = document.getElementById("gridAll");
   if (!grid) return;
+
   grid.innerHTML = "";
   allRenderedCount = 0;
-  renderMoreGridAll(); // primeira página
+  renderMoreGridAll();
 }
 
 function renderMoreGridAll() {
@@ -190,23 +159,13 @@ function renderMoreGridAll() {
   if (!grid) return;
 
   const next = allFiltered.slice(allRenderedCount, allRenderedCount + PAGE_SIZE);
-  next.forEach((p) => {
-    // ✅ "Ver tudo" SEM tag
-    grid.appendChild(makeCard(p, { showCategoryTag: false }));
-  });
+  next.forEach((p) => grid.appendChild(makeCard(p, { showCategoryTag: false })));
 
   allRenderedCount += next.length;
   grid.classList.toggle("is-compact", viewCompact);
-
-  // feedback no status
-  const total = allFiltered.length;
-  const status = document.getElementById("updateStatus");
-  if (status && total) {
-    // mantém o "Atualizado..." e adiciona progressinho
-    const base = status.textContent.split(" • ")[0];
-    status.textContent = `${base} • ${total} itens • exibindo ${Math.min(allRenderedCount, total)}/${total}`;
-  }
+  updateLoadMoreUI();
 }
+/* ===================================== */
 
 function populateSelectCats() {
   const sel = document.getElementById("cat");
@@ -215,11 +174,9 @@ function populateSelectCats() {
   const map = new Map();
   for (const p of ALL) map.set(p.categorySlug, p.categoryName);
 
-  const cats = [...map.entries()]
-    .map(([slug, name]) => ({ slug, name }))
-    .filter((c) => c.slug && c.name);
-
-  cats.sort((a, b) => a.name.localeCompare(b.name));
+  const cats = [...map.entries()].map(([slug, name]) => ({ slug, name }))
+    .filter((c) => c.slug && c.name)
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   sel.innerHTML =
     `<option value="all">Todas categorias</option>` +
@@ -234,8 +191,7 @@ function renderChips() {
 
   const mk = (name, slug) => {
     const b = document.createElement("button");
-    const isActive =
-      (slug === null && activeCat === null) || (slug !== null && activeCat === slug);
+    const isActive = (slug === null && activeCat === null) || (slug !== null && activeCat === slug);
     b.className = "chip" + (isActive ? " active" : "");
     b.textContent = name;
     b.onclick = () => {
@@ -251,15 +207,15 @@ function renderChips() {
   el.appendChild(mk("Todos", null));
 
   const catsFromFile = Array.isArray(CATS) && CATS.length > 0;
-
   if (catsFromFile) {
     CATS.forEach((c) => el.appendChild(mk(c.name, c.slug)));
   } else {
     const map = new Map();
     for (const p of ALL) map.set(p.categorySlug, p.categoryName);
-    const cats = [...map.entries()].map(([slug, name]) => ({ slug, name }));
-    cats.sort((a, b) => a.name.localeCompare(b.name));
-    cats.forEach((c) => el.appendChild(mk(c.name, c.slug)));
+    [...map.entries()]
+      .map(([slug, name]) => ({ slug, name }))
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .forEach((c) => el.appendChild(mk(c.name, c.slug)));
   }
 }
 
@@ -271,7 +227,6 @@ function applyFilters() {
   activeCat = selCat === "all" ? null : selCat;
 
   let list = [...ALL];
-
   if (activeCat) list = list.filter((p) => p.categorySlug === activeCat);
   if (q) list = list.filter((p) => (p.title || "").toLowerCase().includes(q));
 
@@ -280,17 +235,14 @@ function applyFilters() {
     list = list.filter((p) => favs.has(p.sourceId));
   }
 
-  // ordenação
   if (sort === "price_asc") {
     list.sort((a, b) => (a.promoPrice ?? a.price) - (b.promoPrice ?? b.price));
   } else if (sort === "price_desc") {
     list.sort((a, b) => (b.promoPrice ?? b.price) - (a.promoPrice ?? a.price));
   } else if (sort === "discount") {
     list.sort((a, b) => {
-      const da =
-        a.promoPrice != null && a.price ? Math.round((1 - a.promoPrice / a.price) * 100) : -1;
-      const db =
-        b.promoPrice != null && b.price ? Math.round((1 - b.promoPrice / b.price) * 100) : -1;
+      const da = a.promoPrice != null && a.price ? Math.round((1 - a.promoPrice / a.price) * 100) : -1;
+      const db = b.promoPrice != null && b.price ? Math.round((1 - b.promoPrice / b.price) * 100) : -1;
       return db - da;
     });
   } else if (sort === "bestsellers") {
@@ -307,55 +259,26 @@ function applyFilters() {
   return list;
 }
 
-let observer = null;
-
-function setupInfiniteScroll() {
-  const sentinel = ensureSentinel();
-  if (!sentinel) return;
-
-  if (observer) observer.disconnect();
-
-  observer = new IntersectionObserver(
-    (entries) => {
-      const entry = entries[0];
-      if (!entry.isIntersecting) return;
-
-      // carrega mais enquanto tiver
-      if (allRenderedCount < allFiltered.length) {
-        renderMoreGridAll();
-      }
-    },
-    { root: null, rootMargin: "1200px 0px", threshold: 0 }
-  );
-
-  observer.observe(sentinel);
-}
-
 function renderAll() {
   const list = applyFilters();
 
-  // vitrines (fixas e leves)
+  // vitrines fixas
   const trending = [...list].sort((a, b) => {
     const ap = a.promoPrice != null ? 1 : 0;
     const bp = b.promoPrice != null ? 1 : 0;
     if (bp !== ap) return bp - ap;
     return (a.promoPrice ?? a.price) - (b.promoPrice ?? b.price);
   });
-
-  const best = [...list].sort(
-    (a, b) => (a.promoPrice ?? a.price) - (b.promoPrice ?? b.price)
-  );
-
+  const best = [...list].sort((a, b) => (a.promoPrice ?? a.price) - (b.promoPrice ?? b.price));
   const deals = [...list].filter((p) => p.promoPrice != null && p.price);
 
   fillGridFixed("gridTrending", trending, 12, { showCategoryTag: true });
   fillGridFixed("gridBest", best, 12, { showCategoryTag: true });
   fillGridFixed("gridDeals", deals, 12, { showCategoryTag: true });
 
-  // ✅ Ver tudo = TODOS, mas com infinite scroll (pra não travar)
+  // "Ver tudo" com botão
   allFiltered = list;
   resetGridAll();
-  setupInfiniteScroll();
 
   const hint = document.getElementById("updatedHint");
   if (hint) hint.textContent = "—";
@@ -371,6 +294,7 @@ function wireUI() {
   document.getElementById("toggleView")?.addEventListener("click", (e) => {
     viewCompact = !viewCompact;
     e.currentTarget.setAttribute("aria-pressed", String(viewCompact));
+    // não precisa recalcular filtros; só re-render
     renderAll();
   });
 
@@ -380,14 +304,12 @@ function wireUI() {
     renderAll();
   });
 
-  // busca do header espelha pro campo novo
   document.getElementById("search")?.addEventListener("input", (e) => {
     const q = document.getElementById("q");
     if (q) q.value = e.target.value || "";
     renderAll();
   });
 
-  // modal fechar
   document.getElementById("close")?.addEventListener("click", () => {
     document.getElementById("modal")?.close();
   });
@@ -395,7 +317,6 @@ function wireUI() {
     if (e.target?.id === "modal") document.getElementById("modal")?.close();
   });
 
-  // botões do hero
   document.getElementById("btnTop")?.addEventListener("click", () => {
     activeCat = null;
     const q = document.getElementById("q");
@@ -410,6 +331,11 @@ function wireUI() {
     const sel = document.getElementById("cat");
     if (sel) sel.value = "miniaturas";
     renderAll();
+  });
+
+  // ✅ Botão carregar mais
+  document.getElementById("loadMoreBtn")?.addEventListener("click", () => {
+    renderMoreGridAll();
   });
 }
 
@@ -436,8 +362,7 @@ async function boot() {
   populateSelectCats();
   renderAll();
 
-  // status inicial
-  statusText(`Atualizado: ${data.updatedAt || "—"}`);
+  statusText(`Atualizado: ${data.updatedAt || "—"} • ${ALL.length} itens`);
 }
 
 boot().catch((e) => {
