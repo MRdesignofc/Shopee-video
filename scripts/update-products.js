@@ -1,20 +1,23 @@
 /**
- * Update products.json from your existing Shopee-integrated feed (API/proxy)
- * - No mock data
- * - Merges incrementally by source+sourceId
- * - Fills tiktokUrl when null
- * - Writes /products.json (root)
+ * Update products.json using Shopee credentials stored as GitHub Secrets.
+ *
+ * Required env:
+ * - SHOPEE_APP_ID
+ * - SHOPEE_SECRET
+ * - SHOPEE_API_URL   (endpoint base/rota completa que retorna itens)
+ *
+ * Output:
+ * - /products.json   { updatedAt, items: [...] }
  */
 
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 
-// Node 20+ has global fetch
 const OUT_FILE = path.join(process.cwd(), "products.json");
-const MAX_ITEMS = 5000; // ajuste se quiser (2k~20k ok, mas cuidado com tamanho)
+const MAX_ITEMS = 5000;
 
 function nowUTCString() {
-  // mantém seu padrão "YYYY-MM-DD HH:mm UTC"
   const d = new Date();
   const yyyy = d.getUTCFullYear();
   const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
@@ -44,44 +47,80 @@ function buildTikTokUrl(title, categoryName) {
 
 function normalizeItem(p) {
   const source = p.source || "shopee_affiliate";
-  const sourceId = String(p.sourceId ?? "");
+  const sourceId = String(p.sourceId ?? p.itemid ?? p.product_id ?? p.id ?? "");
   if (!sourceId) return null;
 
-  const title = String(p.title ?? "").trim();
+  const title = String(p.title ?? p.name ?? "").trim();
   if (!title) return null;
 
   return {
     source,
     sourceId,
     title,
-    imageUrl: p.imageUrl || "",
+    imageUrl: p.imageUrl ?? p.image_url ?? p.thumb ?? "",
     price: typeof p.price === "number" ? p.price : Number(p.price) || 0,
-    promoPrice: p.promoPrice == null ? null : (typeof p.promoPrice === "number" ? p.promoPrice : Number(p.promoPrice) || null),
-    productUrl: p.productUrl || "",
-    categorySlug: p.categorySlug || "geral",
-    categoryName: p.categoryName || "Geral",
-    tiktokUrl: p.tiktokUrl || null,
-    // opcional
-    addedAt: p.addedAt || null,
+    promoPrice:
+      p.promoPrice == null
+        ? null
+        : (typeof p.promoPrice === "number" ? p.promoPrice : Number(p.promoPrice) || null),
+    productUrl: p.productUrl ?? p.url ?? p.link ?? "",
+    categorySlug: p.categorySlug ?? p.category_slug ?? "geral",
+    categoryName: p.categoryName ?? p.category_name ?? "Geral",
+    tiktokUrl: p.tiktokUrl ?? null,
+    addedAt: p.addedAt ?? null,
   };
 }
 
-async function fetchFeed(url) {
-  const res = await fetch(url, {
-    headers: { "accept": "application/json" },
-    cache: "no-store",
+/**
+ * NOTE:
+ * I don't assume Shopee's exact signature scheme because it varies by program.
+ * This helper gives you a standard HMAC signature pattern you can adapt if needed.
+ *
+ * Many affiliate APIs do something like:
+ *   sign = HMAC_SHA256(secret, appId + timestamp + path + body)
+ *
+ * If your existing implementation differs, you can adjust the payload composition here.
+ */
+function hmacSha256Hex(secret, payload) {
+  return crypto.createHmac("sha256", secret).update(payload).digest("hex");
+}
+
+async function callShopeeApi({ apiUrl, appId, secret, payload }) {
+  const timestamp = Math.floor(Date.now() / 1000).toString();
+
+  // Common-ish signing approach (adjust if your API docs differ)
+  const body = JSON.stringify(payload || {});
+  const signPayload = `${appId}${timestamp}${apiUrl}${body}`;
+  const signature = hmacSha256Hex(secret, signPayload);
+
+  const res = await fetch(apiUrl, {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "accept": "application/json",
+      "x-app-id": appId,
+      "x-timestamp": timestamp,
+      "x-signature": signature,
+    },
+    body,
   });
+
+  const text = await res.text().catch(() => "");
   if (!res.ok) {
-    const txt = await res.text().catch(() => "");
-    throw new Error(`Feed HTTP ${res.status} ${res.statusText} :: ${txt.slice(0, 200)}`);
+    throw new Error(`Shopee API HTTP ${res.status} ${res.statusText} :: ${text.slice(0, 300)}`);
   }
-  return res.json();
+
+  // tenta parsear json
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`Resposta não-JSON da Shopee API: ${text.slice(0, 200)}`);
+  }
 }
 
 function merge(oldItems, newItems) {
   const map = new Map();
 
-  // existing first
   for (const it of oldItems) {
     const n = normalizeItem(it);
     if (!n) continue;
@@ -95,18 +134,15 @@ function merge(oldItems, newItems) {
     const n = normalizeItem(it);
     if (!n) continue;
 
-    // garante TikTok
     if (!n.tiktokUrl) n.tiktokUrl = buildTikTokUrl(n.title, n.categoryName);
 
     const k = keyOf(n);
     const prev = map.get(k);
 
     if (!prev) {
-      // novo
       map.set(k, { ...n, addedAt: n.addedAt || new Date().toISOString() });
       added++;
     } else {
-      // atualiza campos vivos, preserva addedAt
       map.set(k, {
         ...prev,
         ...n,
@@ -116,7 +152,6 @@ function merge(oldItems, newItems) {
     }
   }
 
-  // ordena: mais novos primeiro por addedAt
   const merged = Array.from(map.values()).sort((a, b) => {
     const da = Date.parse(a.addedAt || 0) || 0;
     const db = Date.parse(b.addedAt || 0) || 0;
@@ -127,34 +162,48 @@ function merge(oldItems, newItems) {
 }
 
 async function main() {
-  const FEED_URL = process.env.PRODUCTS_FEED_URL;
+  const appId = process.env.SHOPEE_APP_ID;
+  const secret = process.env.SHOPEE_SECRET;
+  const apiUrl = process.env.SHOPEE_API_URL;
 
-  if (!FEED_URL) {
+  if (!appId || !secret || !apiUrl) {
     throw new Error(
-      "Env var PRODUCTS_FEED_URL não definida. Coloque nos Secrets do GitHub e passe no workflow."
+      "Faltam env vars. Você precisa definir SHOPEE_APP_ID, SHOPEE_SECRET e SHOPEE_API_URL nos Secrets do GitHub."
     );
   }
 
-  console.log("🔄 Lendo products.json atual…");
   const current = readJSONIfExists(OUT_FILE, { updatedAt: null, items: [] });
   const oldItems = Array.isArray(current.items) ? current.items : [];
 
-  console.log("🌐 Buscando feed real:", FEED_URL);
-  const data = await fetchFeed(FEED_URL);
+  // 🔧 Payload genérico — ajuste conforme o endpoint que você usa.
+  // Se seu endpoint já retorna tudo sem payload, deixe {}.
+  const payload = {
+    // exemplo de filtros:
+    // country: "BR",
+    // page: 1,
+    // page_size: 200,
+  };
 
-  // aceita formatos:
-  // A) { updatedAt, items: [...] }
-  // B) { items: [...] }
-  // C) [...items]
+  console.log("🌐 Chamando Shopee API…");
+  const data = await callShopeeApi({ apiUrl, appId, secret, payload });
+
+  // Aceita formatos comuns:
+  // 1) { items: [...] }
+  // 2) { data: { items: [...] } }
+  // 3) { list: [...] }
+  // 4) [...]
   const incomingItems = Array.isArray(data)
     ? data
     : Array.isArray(data.items)
       ? data.items
-      : [];
+      : Array.isArray(data?.data?.items)
+        ? data.data.items
+        : Array.isArray(data.list)
+          ? data.list
+          : [];
 
   if (!incomingItems.length) {
-    console.log("⚠️ Feed retornou 0 itens. Não vou sobrescrever seu catálogo.");
-    // ainda atualiza timestamp (opcional). Aqui eu prefiro NÃO mexer no arquivo.
+    console.log("⚠️ API retornou 0 itens. Não vou sobrescrever seu catálogo.");
     return;
   }
 
@@ -167,7 +216,7 @@ async function main() {
 
   fs.writeFileSync(OUT_FILE, JSON.stringify(out, null, 2), "utf8");
 
-  console.log(`✅ products.json atualizado`);
+  console.log("✅ products.json atualizado");
   console.log(`➕ novos: ${added} | ♻️ atualizados: ${updated} | total: ${total} | salvo: ${items.length}`);
 }
 
