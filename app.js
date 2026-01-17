@@ -1,452 +1,592 @@
-// app.js (vitrines) - FINAL: "Ver tudo" com botão Carregar mais + loading + miniaturas premium filter
-let ALL = [];
-let CATS = [];
-let activeCat = null;
-
-let viewCompact = false;
-let onlyFav = false;
-
-// "Ver tudo" com paginação
-let allFiltered = [];
-let allRenderedCount = 0;
-const PAGE_SIZE = 60;
-
-let isLoadingMore = false;
-let loadMoreDefaultText = "Carregar mais";
-
-const favKey = "shoptrends:favs_v1";
-const getFavs = () => new Set(JSON.parse(localStorage.getItem(favKey) || "[]"));
-const setFavs = (set) => localStorage.setItem(favKey, JSON.stringify([...set]));
-
+// app.js (ESM)
 const fmtBRL = (n) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
-    Number(n ?? 0) || 0
-  );
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(n) || 0);
 
-function statusText(text) {
-  const el = document.getElementById("updateStatus");
-  if (el) el.textContent = text;
-}
+const $ = (id) => document.getElementById(id);
 
-function escapeHtml(s) {
+function safeLower(s) { return (s || "").toString().toLowerCase(); }
+
+function escapeHtml(s){
   return (s || "")
+    .toString()
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;");
 }
 
-async function fetchJson(url) {
-  const res = await fetch(`${url}?t=${Date.now()}`, { cache: "no-store" });
-  if (!res.ok) throw new Error(`Falha ao carregar ${url}: ${res.status}`);
-  return res.json();
+function uniqBy(arr, keyFn){
+  const seen = new Set();
+  const out = [];
+  for (const it of arr){
+    const k = keyFn(it);
+    if (!seen.has(k)){
+      seen.add(k);
+      out.push(it);
+    }
+  }
+  return out;
 }
 
-async function loadProductsJson() {
-  try {
-    return { url: "./products.json", data: await fetchJson("./products.json") };
-  } catch {
-    return { url: "data/products.json", data: await fetchJson("data/products.json") };
+function readFavs(){
+  try{
+    return new Set(JSON.parse(localStorage.getItem("shoptrends_favs") || "[]"));
+  }catch{
+    return new Set();
   }
 }
 
-function buildTikTokUrl(title) {
-  const q = encodeURIComponent(`${title} review unboxing testando`);
+function writeFavs(set){
+  localStorage.setItem("shoptrends_favs", JSON.stringify([...set]));
+}
+
+function scoreMiniaturas(p){
+  // Prioriza Hot Wheels / 1:64 / diecast etc.
+  const t = safeLower(p.title);
+  const keys = [
+    ["hot wheels", 40],
+    ["hotwheels", 40],
+    ["1:64", 35],
+    ["escala 1:64", 35],
+    ["diecast", 30],
+    ["miniatura", 22],
+    ["diorama", 20],
+    ["pista", 14],
+    ["garage", 12],
+    ["garagem", 12],
+    ["colecion", 10],
+    ["matchbox", 14],
+  ];
+  let s = 0;
+  for (const [k,w] of keys) if (t.includes(k)) s += w;
+  return s;
+}
+
+function buildTikTokUrl(title){
+  const q = encodeURIComponent((title || "produto shopee") + " review unboxing");
   return `https://www.tiktok.com/search?q=${q}`;
 }
 
-function openModal(p) {
-  const modal = document.getElementById("modal");
-  if (!modal) return;
+export function createShopTrendsApp({
+  productsUrl = "products.json",
+  categoriesUrl = "data/categories.json",
+  perPage = 48,
+} = {}) {
 
-  document.getElementById("m_img").src = p.imageUrl || "";
-  document.getElementById("m_title").textContent = p.title || "Produto";
-  document.getElementById("m_price").textContent = fmtBRL(p.promoPrice ?? p.price);
-  document.getElementById("m_buy").href = p.productUrl || "#";
-  document.getElementById("m_cat").textContent = p.categoryName || "";
-  document.getElementById("m_tiktok").href = p.tiktokUrl || buildTikTokUrl(p.title || "produto");
-  modal.showModal();
-}
+  let ALL = [];
+  let CATS = [];
+  let updatedAt = "";
+  let view = "home"; // home | all | now | best | deals | cat:<slug>
+  let compact = false;
 
-function makeCard(p, { showCategoryTag }) {
-  const favs = getFavs();
-  const isFav = favs.has(p.sourceId);
+  let page = 1;
+  let favs = readFavs();
 
-  const promo = p.promoPrice ?? null;
-  const showOld = promo != null && p.price;
-  const pct =
-    showOld && p.price
-      ? Math.max(0, Math.round((1 - promo / p.price) * 100))
-      : null;
+  const loadingPill = $("loadingPill");
+  const meta = $("meta");
 
-  const card = document.createElement("article");
-  card.className = "card";
-  card.tabIndex = 0;
+  const elCats = $("cats");
+  const elHeroCats = document.querySelector(".heroCats");
 
-  card.innerHTML = `
-    <img src="${p.imageUrl || ""}" alt="${escapeHtml(p.title)}" loading="lazy"/>
-    <div class="pad">
-      <h3>${escapeHtml(p.title)}</h3>
+  const homeView = $("homeView");
+  const listView = $("listView");
 
-      <div class="price-row" style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;">
-        <div>
-          <p class="price" style="margin:0;">${fmtBRL(promo ?? p.price)}</p>
-          ${showOld ? `<span class="small" style="text-decoration:line-through;opacity:.7;">${fmtBRL(p.price)}</span>` : ""}
-        </div>
-        ${pct != null ? `<span class="badge" style="background:rgba(238,77,45,.08);color:#ee4d2d;border:1px solid rgba(238,77,45,.25)">-${pct}%</span>` : ""}
-      </div>
+  const gridNow = $("gridNow");
+  const gridBest = $("gridBest");
+  const gridDeals = $("gridDeals");
+  const gridAll = $("gridAll");
 
-      ${showCategoryTag ? `<div class="tag">${escapeHtml(p.categoryName || "")}</div>` : ""}
+  const hintNow = $("hintNow");
+  const hintBest = $("hintBest");
+  const hintDeals = $("hintDeals");
 
-      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:10px;">
-        <button class="btn btn-ghost" type="button">Ver</button>
-        <button class="btn btn-ghost" type="button" aria-label="Favoritar">${isFav ? "♥" : "♡"}</button>
-      </div>
-    </div>
-  `;
+  const listTitle = $("listTitle");
+  const listSub = $("listSub");
 
-  const btnVer = card.querySelectorAll("button")[0];
-  const btnFav = card.querySelectorAll("button")[1];
+  const selCat = $("cat");
+  const selSort = $("sort");
 
-  btnVer.addEventListener("click", (e) => {
-    e.stopPropagation();
-    openModal(p);
-  });
+  const loadMoreBtn = $("loadMoreBtn");
+  const loadMoreHint = $("loadMoreHint");
 
-  btnFav.addEventListener("click", (e) => {
-    e.stopPropagation();
-    const set = getFavs();
-    const k = p.sourceId;
-    if (set.has(k)) set.delete(k);
-    else set.add(k);
-    setFavs(set);
-    renderAll();
-  });
+  const qInput = $("q");
+  const btnSearch = $("btnSearch");
+  const btnDeals = $("btnDeals");
 
-  card.addEventListener("click", () => openModal(p));
-  card.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      openModal(p);
+  const toggleViewBtn = $("toggleView");
+  const onlyFavBtn = $("onlyFav");
+
+  let onlyFav = false;
+
+  function setLoading(on){
+    if (!loadingPill) return;
+    loadingPill.hidden = !on;
+  }
+
+  function setMeta(){
+    const count = ALL.length || 0;
+    meta.textContent = updatedAt
+      ? `Atualizado: ${updatedAt} • ${count} itens`
+      : `Atualizando... • ${count} itens`;
+  }
+
+  async function load(){
+    setLoading(true);
+
+    // products
+    const products = await fetch(productsUrl, { cache: "no-store" }).then(r => r.json());
+    updatedAt = products.updatedAt || "";
+    ALL = (products.items || []).filter(Boolean);
+
+    // categories (se falhar, deriva do products)
+    try{
+      const cats = await fetch(categoriesUrl, { cache: "no-store" }).then(r => r.json());
+      CATS = Array.isArray(cats) ? cats : [];
+    }catch{
+      CATS = [];
     }
-  });
 
-  return card;
-}
+    if (!CATS.length){
+      const uniqCats = uniqBy(
+        ALL
+          .filter(p => p.categorySlug && p.categoryName)
+          .map(p => ({ slug: p.categorySlug, name: p.categoryName })),
+        (x) => x.slug
+      );
+      CATS = uniqCats.sort((a,b) => a.name.localeCompare(b.name, "pt-BR"));
+    }
 
-function fillGridFixed(id, items, limit, cardOpts) {
-  const grid = document.getElementById(id);
-  if (!grid) return;
+    // Preenche selects
+    selCat.innerHTML = `<option value="all">Todas categorias</option>` +
+      CATS.map(c => `<option value="${escapeHtml(c.slug)}">${escapeHtml(c.name)}</option>`).join("");
 
-  grid.innerHTML = "";
-  items.slice(0, limit).forEach((p) => grid.appendChild(makeCard(p, cardOpts)));
-  grid.classList.toggle("is-compact", viewCompact);
-}
+    // Render UI base
+    setMeta();
+    renderChips();
+    renderHeroShortcuts();
+    applyCompact();
+    render();
 
-/* ====== VER TUDO (Carregar mais) ====== */
-function updateLoadMoreUI() {
-  const btn = document.getElementById("loadMoreBtn");
-  const info = document.getElementById("loadMoreInfo");
-  if (!btn) return;
-
-  const total = allFiltered.length;
-  const shown = Math.min(allRenderedCount, total);
-
-  if (info) info.textContent = `Exibindo ${shown}/${total}`;
-
-  const hasMore = shown < total;
-
-  if (!hasMore) {
-    btn.style.display = "none";
-    return;
+    setLoading(false);
   }
 
-  btn.style.display = "inline-flex";
+  function applyCompact(){
+    const grids = document.querySelectorAll(".grid");
+    grids.forEach(g => {
+      if (compact) g.classList.add("is-compact");
+      else g.classList.remove("is-compact");
+    });
 
-  btn.disabled = isLoadingMore;
-  btn.style.opacity = isLoadingMore ? "0.8" : "1";
-  btn.style.pointerEvents = isLoadingMore ? "none" : "auto";
-
-  if (isLoadingMore) {
-    btn.innerHTML = `<span class="spinner" aria-hidden="true"></span>Carregando...`;
-  } else {
-    btn.textContent = loadMoreDefaultText;
+    toggleViewBtn.setAttribute("aria-pressed", compact ? "true" : "false");
+    toggleViewBtn.textContent = compact ? "Cards" : "Miniaturas";
   }
-}
 
-function resetGridAll() {
-  const grid = document.getElementById("gridAll");
-  if (!grid) return;
+  function renderHeroShortcuts(){
+    if (!elHeroCats) return;
 
-  grid.innerHTML = "";
-  allRenderedCount = 0;
-  renderMoreGridAll();
-}
+    const quick = [
+      { slug: "eletronicos", name: "Eletrônicos", icon: "🎧" },
+      { slug: "moda", name: "Moda", icon: "👕" },
+      { slug: "casa-decoracao", name: "Casa & Decoração", icon: "🏠" },
+      { slug: "beleza", name: "Beleza", icon: "💄" },
+    ];
 
-async function renderMoreGridAll() {
-  const grid = document.getElementById("gridAll");
-  if (!grid) return;
+    elHeroCats.innerHTML = "";
+    for (const q of quick){
+      const btn = document.createElement("div");
+      btn.className = "heroCat";
+      btn.innerHTML = `
+        <div class="heroCat__icon">${q.icon}</div>
+        <div class="heroCat__label">${escapeHtml(q.name)}</div>
+      `;
+      btn.onclick = () => {
+        // tenta achar slug real mais próximo
+        const found = CATS.find(c => c.slug === q.slug) || CATS.find(c => safeLower(c.name).includes(safeLower(q.name)));
+        if (found) setView(`cat:${found.slug}`);
+        else setView("all");
+      };
+      elHeroCats.appendChild(btn);
+    }
+  }
 
-  if (isLoadingMore) return;
+  function renderChips(){
+    elCats.innerHTML = "";
 
-  isLoadingMore = true;
-  updateLoadMoreUI();
+    const items = [
+      { key: "all", label: "Todos" },
+      { key: "now", label: "Vendendo agora" },
+      { key: "best", label: "Mais vendidos" },
+      // depois: categorias reais do site
+      ...CATS.map(c => ({ key: `cat:${c.slug}`, label: c.name })),
+    ];
 
-  // deixa o browser respirar antes de inserir cards
-  await new Promise((r) => setTimeout(r, 50));
+    for (const it of items){
+      const b = document.createElement("button");
+      b.className = "chip";
+      b.textContent = it.label;
+      b.onclick = () => setView(it.key);
+      elCats.appendChild(b);
+    }
 
-  const next = allFiltered.slice(allRenderedCount, allRenderedCount + PAGE_SIZE);
+    paintActiveChip();
+  }
 
-  // ✅ "Ver tudo" SEM tag de categoria
-  next.forEach((p) => grid.appendChild(makeCard(p, { showCategoryTag: false })));
+  function paintActiveChip(){
+    const buttons = elCats.querySelectorAll(".chip");
+    buttons.forEach(btn => {
+      const k = btn.textContent;
+      // ativa por comparação simples (ok visual)
+      btn.classList.remove("active");
+    });
 
-  allRenderedCount += next.length;
-  grid.classList.toggle("is-compact", viewCompact);
-
-  isLoadingMore = false;
-  updateLoadMoreUI();
-}
-/* ===================================== */
-
-function populateSelectCats() {
-  const sel = document.getElementById("cat");
-  if (!sel) return;
-
-  const map = new Map();
-  for (const p of ALL) map.set(p.categorySlug, p.categoryName);
-
-  const cats = [...map.entries()]
-    .map(([slug, name]) => ({ slug, name }))
-    .filter((c) => c.slug && c.name)
-    .sort((a, b) => a.name.localeCompare(b.name));
-
-  sel.innerHTML =
-    `<option value="all">Todas categorias</option>` +
-    cats.map((c) => `<option value="${c.slug}">${c.name}</option>`).join("");
-}
-
-function renderChips() {
-  const el = document.getElementById("cats");
-  if (!el) return;
-
-  el.innerHTML = "";
-
-  const mk = (name, slug) => {
-    const b = document.createElement("button");
-    const isActive =
-      (slug === null && activeCat === null) || (slug !== null && activeCat === slug);
-    b.className = "chip" + (isActive ? " active" : "");
-    b.textContent = name;
-    b.onclick = () => {
-      activeCat = slug;
-      const sel = document.getElementById("cat");
-      if (sel) sel.value = slug || "all";
-      renderAll();
-      renderChips();
-    };
-    return b;
-  };
-
-  el.appendChild(mk("Todos", null));
-
-  const catsFromFile = Array.isArray(CATS) && CATS.length > 0;
-
-  if (catsFromFile) {
-    CATS.forEach((c) => el.appendChild(mk(c.name, c.slug)));
-  } else {
+    // marca o ativo de forma consistente
     const map = new Map();
-    for (const p of ALL) map.set(p.categorySlug, p.categoryName);
-    [...map.entries()]
-      .map(([slug, name]) => ({ slug, name }))
-      .sort((a, b) => a.name.localeCompare(b.name))
-      .forEach((c) => el.appendChild(mk(c.name, c.slug)));
-  }
-}
+    [...elCats.querySelectorAll(".chip")].forEach((b) => map.set(b.textContent, b));
 
-function applyMiniaturasPremiumFilter(list) {
-  const include = [
-    "miniatura", "diecast", "metal", "1:64", "1/64", "1:32", "1/32", "1:43", "1/43",
-    "hot wheels", "hw", "mini gt", "minigt", "tarmac", "inno64", "tomica", "maisto",
-    "colecionável", "colecionavel", "premium",
-    "g63", "g class", "g-class", "g-wagon", "gelandewagen", "4x4", "off road", "off-road",
-    "suv", "jeep", "land rover", "defender", "range rover", "wrangler", "pickup", "caminhonete",
-    "nissan skyline", "supra", "civic", "bmw", "mercedes", "audi", "porsche", "lamborghini", "ferrari"
-  ];
+    const activeLabel =
+      view === "all" ? "Todos" :
+      view === "now" ? "Vendendo agora" :
+      view === "best" ? "Mais vendidos" :
+      view === "deals" ? "Ofertas" :
+      view.startsWith("cat:") ? (CATS.find(c => `cat:${c.slug}` === view)?.name || "Todos") :
+      "Todos";
 
-  const exclude = [
-    "elevador", "diorama", "pista", "garagem", "suporte", "expositor", "organizador",
-    "placa", "adesivo", "kit", "lote", "atacado", "blister", "cartela",
-    "tapete", "cenário", "cenario", "porta", "parede", "gancho", "fixador"
-  ];
-
-  const norm = (s) => (s || "").toLowerCase();
-  const hasAny = (text, arr) => arr.some((k) => text.includes(k));
-
-  return list.filter((p) => {
-    const t = norm(p.title);
-    const okInclude = hasAny(t, include);
-    const okExclude = !hasAny(t, exclude);
-    return okInclude && okExclude;
-  });
-}
-
-function applyFilters() {
-  const q = (document.getElementById("q")?.value || "").toLowerCase().trim();
-  const selCat = document.getElementById("cat")?.value || "all";
-  const sort = document.getElementById("sort")?.value || "trending";
-
-  activeCat = selCat === "all" ? null : selCat;
-
-  let list = [...ALL];
-
-  if (activeCat) list = list.filter((p) => p.categorySlug === activeCat);
-  if (q) list = list.filter((p) => (p.title || "").toLowerCase().includes(q));
-
-  // ✅ filtro especial para miniaturas premium/diecast
-  if (activeCat === "miniaturas") {
-    list = applyMiniaturasPremiumFilter(list);
+    const btn = map.get(activeLabel);
+    if (btn) btn.classList.add("active");
   }
 
-  if (onlyFav) {
-    const favs = getFavs();
-    list = list.filter((p) => favs.has(p.sourceId));
+  function setView(v){
+    view = v;
+    page = 1;
+    paintActiveChip();
+    render();
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  if (sort === "price_asc") {
-    list.sort((a, b) => (a.promoPrice ?? a.price) - (b.promoPrice ?? b.price));
-  } else if (sort === "price_desc") {
-    list.sort((a, b) => (b.promoPrice ?? b.price) - (a.promoPrice ?? a.price));
-  } else if (sort === "discount") {
-    list.sort((a, b) => {
-      const da =
-        a.promoPrice != null && a.price ? Math.round((1 - a.promoPrice / a.price) * 100) : -1;
-      const db =
-        b.promoPrice != null && b.price ? Math.round((1 - b.promoPrice / b.price) * 100) : -1;
-      return db - da;
+  function currentQuery(){
+    return safeLower(qInput.value).trim();
+  }
+
+  function baseFiltered(){
+    const q = currentQuery();
+
+    let items = ALL;
+
+    // favoritos
+    if (onlyFav){
+      items = items.filter(p => favs.has(p.sourceId || p.productUrl || p.title));
+    }
+
+    // categoria select (dropdown)
+    const catSel = selCat.value;
+    if (catSel && catSel !== "all"){
+      items = items.filter(p => p.categorySlug === catSel);
+    }
+
+    // view por chip
+    if (view.startsWith("cat:")){
+      const slug = view.split(":")[1];
+      items = items.filter(p => p.categorySlug === slug);
+    }
+
+    // busca
+    if (q){
+      items = items.filter(p => safeLower(p.title).includes(q));
+    }
+
+    return items;
+  }
+
+  function getDeals(items){
+    // Ofertas: promoPrice existe e é menor que price
+    const deals = items.filter(p => p.promoPrice != null && Number(p.promoPrice) < Number(p.price));
+    // fallback: se quase não tiver promo, pega preço baixo
+    if (deals.length >= 24) return deals;
+    const cheap = [...items].sort((a,b) => (Number(a.price)||0) - (Number(b.price)||0)).slice(0, 80);
+    return uniqBy([...deals, ...cheap], (p) => p.sourceId || p.productUrl || p.title);
+  }
+
+  function sortItems(items){
+    const sort = selSort.value;
+
+    if (sort === "price_asc"){
+      return [...items].sort((a,b) => (Number(a.promoPrice ?? a.price)||0) - (Number(b.promoPrice ?? b.price)||0));
+    }
+    if (sort === "price_desc"){
+      return [...items].sort((a,b) => (Number(b.promoPrice ?? b.price)||0) - (Number(a.promoPrice ?? a.price)||0));
+    }
+    if (sort === "discount"){
+      return [...items].sort((a,b) => {
+        const da = (Number(a.price)||0) - (Number(a.promoPrice ?? a.price)||0);
+        const db = (Number(b.price)||0) - (Number(b.promoPrice ?? b.price)||0);
+        return db - da;
+      });
+    }
+    if (sort === "newest"){
+      // “vendendo agora” = assume arquivo ordenado mais recente primeiro
+      return [...items];
+    }
+    if (sort === "bestsellers"){
+      // sem métrica real => aproxima por “mais caros primeiro” (visualmente ok) + estabilidade
+      return [...items].sort((a,b) => (Number(b.price)||0) - (Number(a.price)||0));
+    }
+
+    // relevance default: miniaturas prioriza keywords
+    if ((view === "all" && selCat.value === "miniaturas") || view === "cat:miniaturas"){
+      return [...items].sort((a,b) => scoreMiniaturas(b) - scoreMiniaturas(a));
+    }
+
+    return items;
+  }
+
+  function ensureViewVisibility(){
+    // HOME aparece só quando view=home
+    // LIST aparece quando view != home
+    const isHome = (view === "home");
+    homeView.hidden = !isHome;
+    listView.hidden = isHome;
+  }
+
+  function render(){
+    setMeta();
+    ensureViewVisibility();
+
+    // Compact toggle
+    applyCompact();
+
+    // HOME vitrines sempre carregam do conjunto filtrado por dropdown/busca/favs
+    // (sem quebrar UI)
+    const base = sortItems(baseFiltered());
+
+    // se usuário escolheu um view específico diferente de home:
+    if (view !== "home"){
+      renderList(base);
+      return;
+    }
+
+    // vitrines
+    const now = base.slice(0, 16);
+    const best = [...base].sort((a,b) => (Number(b.price)||0) - (Number(a.price)||0)).slice(0, 16);
+    const deals = getDeals(base).slice(0, 16);
+
+    hintNow.textContent = `${now.length} itens`;
+    hintBest.textContent = `${best.length} itens`;
+    hintDeals.textContent = `${deals.length} itens`;
+
+    renderGrid(gridNow, now);
+    renderGrid(gridBest, best);
+    renderGrid(gridDeals, deals);
+  }
+
+  function renderList(base){
+    // define título
+    let title = "Todos os produtos";
+    if (view === "all") title = "Todos os produtos";
+    if (view === "now") title = "Vendendo agora";
+    if (view === "best") title = "Mais vendidos";
+    if (view === "deals") title = "Ofertas";
+    if (view.startsWith("cat:")){
+      const slug = view.split(":")[1];
+      title = CATS.find(c => c.slug === slug)?.name || "Categoria";
+    }
+    listTitle.textContent = title;
+
+    let items = base;
+
+    if (view === "now"){
+      items = base.slice(0, 500); // não limita “pra sempre”, mas mantém navegação ok
+    } else if (view === "best"){
+      items = [...base].sort((a,b) => (Number(b.price)||0) - (Number(a.price)||0));
+    } else if (view === "deals"){
+      items = getDeals(base);
+    } else if (view === "all"){
+      // já ok
+    } else if (view.startsWith("cat:")){
+      // já filtrado
+      // miniaturas => prioriza Hot Wheels
+      if (view === "cat:miniaturas"){
+        items = [...items].sort((a,b) => scoreMiniaturas(b) - scoreMiniaturas(a));
+      }
+    }
+
+    // paginação load more
+    const total = items.length;
+    const shown = Math.min(total, page * perPage);
+    const slice = items.slice(0, shown);
+
+    listSub.textContent = `${shown} de ${total} itens`;
+    renderGrid(gridAll, slice);
+
+    // load more button
+    const hasMore = shown < total;
+    loadMoreBtn.disabled = !hasMore;
+    loadMoreBtn.style.opacity = hasMore ? "1" : ".6";
+    loadMoreBtn.textContent = hasMore ? "Carregar mais" : "Tudo carregado";
+    loadMoreHint.textContent = hasMore ? `Mostrando ${shown} de ${total}` : `Total: ${total}`;
+
+    // garante que não apareça “categorias no meio”:
+    // (nada de headings dentro do grid; aqui grid só recebe cards)
+  }
+
+  function renderGrid(gridEl, items){
+    gridEl.innerHTML = "";
+
+    if (!items.length){
+      gridEl.innerHTML = `<div class="small">Nenhum produto encontrado.</div>`;
+      return;
+    }
+
+    for (const p of items){
+      const id = p.sourceId || p.productUrl || p.title;
+      const isFav = favs.has(id);
+      const price = Number(p.promoPrice ?? p.price) || 0;
+      const old = (p.promoPrice != null && Number(p.price) > Number(p.promoPrice)) ? Number(p.price) : null;
+
+      const card = document.createElement("article");
+      card.className = "card";
+      card.innerHTML = `
+        <div class="card__imgWrap">
+          <img class="card__img" src="${escapeHtml(p.imageUrl || "")}" alt="${escapeHtml(p.title || "")}" loading="lazy"
+               onerror="this.style.opacity='.25'; this.style.filter='grayscale(1)';" />
+        </div>
+
+        <div class="card__pad">
+          <h3 class="card__title">${escapeHtml(p.title || "Produto")}</h3>
+
+          <div class="priceRow">
+            <div class="price">
+              ${fmtBRL(price)}
+              ${old ? `<span class="priceOld">${fmtBRL(old)}</span>` : ""}
+            </div>
+            <span class="small">Shopee</span>
+          </div>
+
+          <div class="tag">${escapeHtml(p.categoryName || "")}</div>
+
+          <div class="card__actions">
+            <button class="card__cta" type="button">Ver</button>
+            <button class="favBtn ${isFav ? "is-on" : ""}" type="button" aria-label="Favoritar">
+              ${isFav ? "❤️" : "🤍"}
+            </button>
+          </div>
+        </div>
+      `;
+
+      // abrir modal ao clicar no card ou “Ver”
+      card.querySelector(".card__cta").onclick = (e) => { e.stopPropagation(); openModal(p); };
+      card.onclick = () => openModal(p);
+
+      // favorito
+      card.querySelector(".favBtn").onclick = (e) => {
+        e.stopPropagation();
+        if (favs.has(id)) favs.delete(id);
+        else favs.add(id);
+        writeFavs(favs);
+        render(); // re-render pra atualizar cor/estado
+      };
+
+      gridEl.appendChild(card);
+    }
+  }
+
+  function openModal(p){
+    const modal = $("modal");
+    $("m_img").src = p.imageUrl || "";
+    $("m_title").textContent = p.title || "Produto";
+    $("m_price").textContent = fmtBRL(p.promoPrice ?? p.price);
+    $("m_cat").textContent = p.categoryName || "";
+
+    $("m_buy").href = p.productUrl || "#";
+    $("m_tiktok").href = p.tiktokUrl || buildTikTokUrl(p.title);
+
+    modal.showModal();
+  }
+
+  function bind(){
+    // close modal
+    $("close").onclick = () => $("modal").close();
+    $("modal").addEventListener("click", (e) => {
+      if (e.target.id === "modal") $("modal").close();
     });
-  } else if (sort === "bestsellers") {
-    list.sort((a, b) => (a.promoPrice ?? a.price) - (b.promoPrice ?? b.price));
-  } else {
-    list.sort((a, b) => {
-      const ap = a.promoPrice != null ? 1 : 0;
-      const bp = b.promoPrice != null ? 1 : 0;
-      if (bp !== ap) return bp - ap;
-      return (a.promoPrice ?? a.price) - (b.promoPrice ?? b.price);
+
+    // search button
+    btnSearch.onclick = () => {
+      // se estava na home, manda pro “Todos”
+      if (view === "home") setView("all");
+      else render();
+    };
+    qInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter"){
+        if (view === "home") setView("all");
+        else render();
+      }
     });
+
+    // deals
+    btnDeals.onclick = () => setView("deals");
+
+    // dropdowns
+    selCat.addEventListener("change", () => {
+      // ao trocar categoria, se estiver home mantém vitrines, se não lista atualiza
+      render();
+    });
+
+    selSort.addEventListener("change", () => render());
+
+    // chips especiais
+    // clique nos chips do topo (renderChips já liga)
+    // mas faltam “now/best” no view:
+    // eles já existem como labels, então tratamos pelo texto:
+    elCats.addEventListener("click", (e) => {
+      const t = e.target;
+      if (!(t instanceof HTMLElement)) return;
+      if (!t.classList.contains("chip")) return;
+
+      const label = t.textContent.trim();
+
+      if (label === "Todos") setView("all");
+      else if (label === "Vendendo agora") setView("now");
+      else if (label === "Mais vendidos") setView("best");
+      else {
+        // categoria por nome
+        const c = CATS.find(x => x.name === label);
+        if (c) setView(`cat:${c.slug}`);
+      }
+    });
+
+    // compact toggle
+    toggleViewBtn.onclick = () => {
+      compact = !compact;
+      applyCompact();
+    };
+
+    // only fav
+    onlyFavBtn.onclick = () => {
+      onlyFav = !onlyFav;
+      onlyFavBtn.setAttribute("aria-pressed", onlyFav ? "true" : "false");
+      onlyFavBtn.textContent = onlyFav ? "Favoritos ✓" : "Favoritos";
+      render();
+    };
+
+    // load more
+    loadMoreBtn.onclick = async () => {
+      if (loadMoreBtn.disabled) return;
+      setLoading(true);
+      loadMoreBtn.textContent = "Carregando...";
+      await new Promise(r => setTimeout(r, 250)); // sensação de loading suave
+      page += 1;
+      setLoading(false);
+      render();
+    };
+
+    // botão carrinho/conta (placeholder)
+    $("cartBtn").onclick = () => setView("deals");
+    $("userBtn").onclick = () => setView("all");
   }
 
-  return list;
+  return {
+    async init(){
+      bind();
+      await load();
+    }
+  };
 }
-
-function renderAll() {
-  const list = applyFilters();
-
-  // vitrines fixas
-  const trending = [...list].sort((a, b) => {
-    const ap = a.promoPrice != null ? 1 : 0;
-    const bp = b.promoPrice != null ? 1 : 0;
-    if (bp !== ap) return bp - ap;
-    return (a.promoPrice ?? a.price) - (b.promoPrice ?? b.price);
-  });
-
-  const best = [...list].sort(
-    (a, b) => (a.promoPrice ?? a.price) - (b.promoPrice ?? b.price)
-  );
-
-  const deals = [...list].filter((p) => p.promoPrice != null && p.price);
-
-  fillGridFixed("gridTrending", trending, 12, { showCategoryTag: true });
-  fillGridFixed("gridBest", best, 12, { showCategoryTag: true });
-  fillGridFixed("gridDeals", deals, 12, { showCategoryTag: true });
-
-  // "Ver tudo" com botão
-  allFiltered = list;
-  resetGridAll();
-
-  const hint = document.getElementById("updatedHint");
-  if (hint) hint.textContent = "—";
-
-  renderChips();
-}
-
-function wireUI() {
-  document.getElementById("q")?.addEventListener("input", renderAll);
-  document.getElementById("cat")?.addEventListener("change", renderAll);
-  document.getElementById("sort")?.addEventListener("change", renderAll);
-
-  document.getElementById("toggleView")?.addEventListener("click", (e) => {
-    viewCompact = !viewCompact;
-    e.currentTarget.setAttribute("aria-pressed", String(viewCompact));
-    renderAll();
-  });
-
-  document.getElementById("onlyFav")?.addEventListener("click", (e) => {
-    onlyFav = !onlyFav;
-    e.currentTarget.setAttribute("aria-pressed", String(onlyFav));
-    renderAll();
-  });
-
-  document.getElementById("search")?.addEventListener("input", (e) => {
-    const q = document.getElementById("q");
-    if (q) q.value = e.target.value || "";
-    renderAll();
-  });
-
-  document.getElementById("close")?.addEventListener("click", () => {
-    document.getElementById("modal")?.close();
-  });
-  document.getElementById("modal")?.addEventListener("click", (e) => {
-    if (e.target?.id === "modal") document.getElementById("modal")?.close();
-  });
-
-  document.getElementById("btnTop")?.addEventListener("click", () => {
-    activeCat = null;
-    const q = document.getElementById("q");
-    const sel = document.getElementById("cat");
-    if (q) q.value = "";
-    if (sel) sel.value = "all";
-    renderAll();
-  });
-
-  document.getElementById("btnMini")?.addEventListener("click", () => {
-    activeCat = "miniaturas";
-    const sel = document.getElementById("cat");
-    if (sel) sel.value = "miniaturas";
-    renderAll();
-  });
-
-  // Botão carregar mais
-  document.getElementById("loadMoreBtn")?.addEventListener("click", async () => {
-    await renderMoreGridAll();
-  });
-}
-
-// products-live.js chama isso com a lista mesclada
-window.renderProducts = function (items) {
-  ALL = Array.isArray(items) ? items : [];
-  populateSelectCats();
-  renderAll();
-};
-
-async function boot() {
-  wireUI();
-
-  try {
-    const cats = await fetchJson("data/categories.json");
-    CATS = Array.isArray(cats) ? cats : [];
-  } catch {
-    CATS = [];
-  }
-
-  const { data } = await loadProductsJson();
-  ALL = Array.isArray(data.items) ? data.items : [];
-
-  populateSelectCats();
-  renderAll();
-
-  statusText(`Atualizado: ${data.updatedAt || "—"} • ${ALL.length} itens`);
-}
-
-boot().catch((e) => {
-  console.error(e);
-  statusText("❌ Erro ao carregar produtos");
-});
