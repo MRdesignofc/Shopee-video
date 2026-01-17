@@ -202,7 +202,7 @@ body{
   box-shadow: none;
 }
 
-/* Grid cards */
+/* Grid cards (layout antigo do site) */
 .grid{
   display:grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -411,6 +411,7 @@ body{
   font-size: 12px;
   text-align:center;
 }
+
 /* =========================
    AUTH / LOGIN (PRO)
    ========================= */
@@ -762,16 +763,9 @@ body{
   text-align:center;
 }
 
-:root{
-  --bg:#fff;
-  --card:#fff;
-  --text:#111;
-  --muted:#6b7280;
-  --brand:#ee4d2d; /* Shopee-ish */
-  --line:#e5e7eb;
-  --shadow: 0 10px 25px rgba(0,0,0,.08);
-  --r:16px;
-}
+/* =========================
+   VITRINES (SEM CONFLITO COM O SITE)
+   ========================= */
 
 .controls{
   display:flex;
@@ -791,161 +785,54 @@ body{
 
 .input, .select{
   height:40px;
-  border:1px solid var(--line);
-  border-radius:12px;
-  padding:0 12px;
+  border:1px solid var(--border);
+  border-radius:999px;
+  padding:0 14px;
   outline:none;
   background:#fff;
   color:var(--text);
+  box-shadow: 0 8px 18px rgba(17,24,39,.04);
 }
 
 .input{ min-width:260px; }
 .select{ min-width:180px; }
 
-.btn{
-  height:40px;
-  padding:0 12px;
-  border-radius:12px;
-  border:1px solid var(--line);
-  background:#fff;
-  cursor:pointer;
-}
-.btn--ghost{
-  background:#fff;
-}
-.btn[aria-pressed="true"]{
-  border-color: rgba(238,77,45,.45);
-  box-shadow: 0 0 0 3px rgba(238,77,45,.12);
-}
-
 .shelves{ display:flex; flex-direction:column; gap:18px; }
-.shelf{ background:transparent; }
 .shelf__head{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
-.shelf__title{ margin:0; font-size:18px; }
+.shelf__title{ margin:0; font-size:18px; font-weight: 1000; }
 .shelf__hint{ color:var(--muted); font-size:12px; }
 
-.grid{
-  margin-top:10px;
-  display:grid;
-  gap:12px;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-}
-@media (max-width:1200px){ .grid{ grid-template-columns: repeat(4, 1fr); } }
-@media (max-width:760px){ .grid{ grid-template-columns: repeat(2, 1fr); } }
-
-.grid.is-compact .card__title{ display:none; }
-.grid.is-compact .card{ padding:10px; }
-.grid.is-compact .card__imgWrap{ aspect-ratio: 1 / 1; }
-
-.card{
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:var(--r);
-  padding:12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,.04);
-  transition: transform .12s ease, box-shadow .12s ease;
-  cursor:pointer;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-.card:hover{ transform: translateY(-2px); box-shadow: var(--shadow); }
-
-.card__imgWrap{
-  width:100%;
-  border-radius:14px;
-  overflow:hidden;
-  background:#f3f4f6;
-  aspect-ratio: 4 / 3;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.card__img{ width:100%; height:100%; object-fit:cover; display:block; }
-
-.card__badges{ display:flex; gap:8px; flex-wrap:wrap; }
-.badge{
-  font-size:11px;
-  padding:4px 8px;
+/* Botões exclusivos do upgrade (não sobrescreve .btn original) */
+.u-btn{
+  height:40px;
+  padding:0 14px;
   border-radius:999px;
-  border:1px solid var(--line);
-  color:var(--text);
+  border:1px solid rgba(238,77,45,.25);
   background:#fff;
-}
-.badge--brand{
-  border-color: rgba(238,77,45,.35);
-  background: rgba(238,77,45,.08);
   color: var(--brand);
-}
-
-.card__title{
-  font-size:13px;
-  line-height:1.25;
-  margin:0;
-  color:var(--text);
-  min-height: 34px;
-}
-
-.card__priceRow{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
-.price{
-  font-size:16px;
-  font-weight:800;
-  color:var(--brand);
-}
-.priceOld{
-  font-size:12px;
-  color:var(--muted);
-  text-decoration: line-through;
-  margin-left:6px;
-}
-.meta{
-  font-size:12px;
-  color:var(--muted);
-  display:flex;
-  gap:10px;
-  align-items:center;
-}
-
-.card__actions{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-}
-.iconBtn{
-  width:38px; height:38px;
-  border-radius:12px;
-  border:1px solid var(--line);
-  background:#fff;
   cursor:pointer;
+  font-weight: 900;
 }
-.iconBtn.is-on{
+.u-btn[aria-pressed="true"]{
   border-color: rgba(238,77,45,.45);
-  box-shadow: 0 0 0 3px rgba(238,77,45,.12);
+  box-shadow: 0 0 0 4px rgba(238,77,45,.12);
 }
 
-.skeleton{
-  position:relative;
-  overflow:hidden;
-}
-.skeleton::after{
-  content:"";
-  position:absolute; inset:0;
-  transform: translateX(-100%);
-  background: linear-gradient(90deg, transparent, rgba(0,0,0,.06), transparent);
-  animation: shimmer 1.1s infinite;
-}
-@keyframes shimmer{
-  100%{ transform: translateX(100%); }
-}
+/* Grid nova (usa os cards do site) */
 .grid2{
   margin-top:10px;
   display:grid;
-  gap:12px;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap:14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
-@media (max-width:1200px){ .grid2{ grid-template-columns: repeat(4, 1fr); } }
-@media (max-width:760px){ .grid2{ grid-template-columns: repeat(2, 1fr); } }
+@media(min-width: 720px){
+  .grid2{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media(min-width: 1020px){
+  .grid2{ grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
 
+/* Compact mode */
 .grid2.is-compact .card h3{ display:none; }
 .grid2.is-compact .card .tag{ display:none; }
+.grid2.is-compact .card img{ height: 160px; }
