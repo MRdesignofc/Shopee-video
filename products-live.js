@@ -1,149 +1,25 @@
-// products-live.js (estável, anti-loop, com fallback de caminho)
-(() => {
-  // evita duplicar caso o script seja carregado 2x
-  if (window.__shopTrendsLiveUpdater?.started) return;
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+import { createShopTrendsApp } from "./app.js";
 
-  const updater = {
-    started: true,
-    inFlight: false,
-    timer: null,
+// Firebase (usa window.FIREBASE_CONFIG do firebase-config.js)
+const fbApp = initializeApp(window.FIREBASE_CONFIG);
+const auth = getAuth(fbApp);
 
-    // tenta primeiro na raiz, depois na pasta data/
-    URLS: ["./products.json", "data/products.json"],
-
-    // 1 hora (mude se quiser: 10 * 60 * 1000)
-    POLL_MS: 60 * 60 * 1000,
-
-    CACHE_KEY: "shoptrends:cache_items_v1",
-    MAX: 800,
+// Logout
+const logoutBtn = document.getElementById("logoutBtn");
+if (logoutBtn){
+  logoutBtn.onclick = async () => {
+    await signOut(auth);
+    window.location.replace("login.html");
   };
+}
 
-  window.__shopTrendsLiveUpdater = updater;
+// App
+const app = createShopTrendsApp({
+  productsUrl: "products.json",
+  categoriesUrl: "data/categories.json",
+  perPage: 48,
+});
 
-  const keyOf = (p) => `${p.source || "src"}:${String(p.sourceId ?? "")}`;
-
-  function statusText(text) {
-    const el = document.getElementById("updateStatus");
-    if (el) el.textContent = text;
-  }
-
-  function loadCache() {
-    try {
-      return JSON.parse(localStorage.getItem(updater.CACHE_KEY) || "[]");
-    } catch {
-      return [];
-    }
-  }
-
-  function saveCache(list) {
-    localStorage.setItem(updater.CACHE_KEY, JSON.stringify(list.slice(0, updater.MAX)));
-  }
-
-  async function fetchJsonTry(url) {
-    const res = await fetch(`${url}?t=${Date.now()}`, { cache: "no-store" });
-    if (!res.ok) throw new Error(`Falha ao carregar: ${url}`);
-    return res.json();
-  }
-
-  async function loadProductsJson() {
-    let lastErr = null;
-    for (const url of updater.URLS) {
-      try {
-        return { url, data: await fetchJsonTry(url) };
-      } catch (e) {
-        lastErr = e;
-      }
-    }
-    throw lastErr || new Error("Falha ao carregar products.json");
-  }
-
-  function mergeAndSort(cached, incoming) {
-    const map = new Map();
-
-    for (const p of cached) {
-      if (!p) continue;
-      const k = keyOf(p);
-      if (!k.endsWith(":")) map.set(k, p);
-    }
-
-    for (const p of incoming) {
-      if (!p) continue;
-      const k = keyOf(p);
-      if (!k || k.endsWith(":")) continue;
-
-      const prev = map.get(k);
-      const addedAt = prev?.addedAt || p.addedAt || null; // ✅ não tenta converter updatedAt (formato não ISO)
-
-      map.set(k, { ...prev, ...p, addedAt });
-    }
-
-    const merged = Array.from(map.values()).sort((a, b) => {
-      const da = Date.parse(a.addedAt || 0) || 0;
-      const db = Date.parse(b.addedAt || 0) || 0;
-      return db - da;
-    });
-
-    return merged.slice(0, updater.MAX);
-  }
-
-  async function refreshOnce() {
-    if (updater.inFlight) return;
-    updater.inFlight = true;
-
-    statusText("🔄 Atualizando…");
-
-    try {
-      const cached = loadCache();
-      const cachedKeys = new Set(cached.map(keyOf));
-
-      const { url, data } = await loadProductsJson();
-
-      const updatedAt = data.updatedAt || null;
-      const items = Array.isArray(data.items) ? data.items : [];
-
-      // normaliza o mínimo
-      const incoming = items
-        .map((p) => ({
-          ...p,
-          source: p.source || "shopee_affiliate",
-          sourceId: String(p.sourceId ?? ""),
-          addedAt: p.addedAt || null,
-        }))
-        .filter((p) => p.sourceId);
-
-      const newOnes = incoming.filter((p) => !cachedKeys.has(keyOf(p)));
-
-      const merged = mergeAndSort(cached, incoming);
-      saveCache(merged);
-
-      // renderiza na UI (app.js precisa expor window.renderProducts)
-      if (typeof window.renderProducts === "function") {
-        window.renderProducts(merged);
-      }
-
-      statusText(
-        updatedAt
-          ? (newOnes.length
-              ? `✅ ${newOnes.length} novos • Atualizado: ${updatedAt}`
-              : `✅ Atualizado: ${updatedAt}`)
-          : (newOnes.length ? `✅ ${newOnes.length} novos produtos` : "✅ Atualizado")
-      );
-
-      // debug opcional (descomente se precisar)
-      // console.log("[ShopTrends] fonte:", url, "items:", items.length, "novos:", newOnes.length);
-
-    } catch (e) {
-      console.error(e);
-      statusText("❌ Erro ao atualizar produtos");
-    } finally {
-      updater.inFlight = false;
-
-      if (updater.timer) clearTimeout(updater.timer);
-      updater.timer = setTimeout(refreshOnce, updater.POLL_MS);
-    }
-  }
-
-  document.addEventListener("DOMContentLoaded", () => {
-    refreshOnce();
-  });
-})();
+app.init();
