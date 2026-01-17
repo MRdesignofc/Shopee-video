@@ -18,15 +18,13 @@ jobs:
         with:
           node-version: 20
 
-      # ❌ REMOVIDO npm ci / npm install
-
       - name: Update products
         run: node scripts/update-products.js
 
       - name: Commit changes
         run: |
-    git config user.name "github-actions"
-    git config user.email "github-actions@github.com"
-    git add products.json
-    git commit -m "auto: update products" || echo "No changes"
-    git push
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add products.json
+          git diff --cached --quiet || git commit -m "auto: update products"
+          git push
