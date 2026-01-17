@@ -3,129 +3,156 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Entrar • Shop Trends</title>
+  <title>Login • Shop Trends</title>
 
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="favicon.png">
-  <link rel="stylesheet" href="style.css"/>
+
+  <link rel="stylesheet" href="login.css"/>
 </head>
-<body class="auth-page">
 
-  <div class="auth-shell">
-    <!-- Lado esquerdo: visual/branding -->
-    <aside class="auth-visual">
-      <div class="auth-visual-top">
-        <a class="auth-brand" href="index.html" onclick="return false;">
-          <span class="auth-logo" aria-hidden="true"></span>
-          <span class="auth-brand-text">
+<body class="auth">
+
+  <main class="authWrap">
+    <section class="authStage">
+
+      <div class="authTop">
+        <div class="brand">
+          <img class="brand__logo" src="favicon.png" alt="Shop Trends">
+          <div class="brand__txt">
             <strong>Shop Trends</strong>
-            <span>Ofertas em alta • estilo Shopee</span>
-          </span>
-        </a>
+            <span>Bem-vindo de volta</span>
+          </div>
+        </div>
       </div>
 
-      <div class="auth-visual-content">
-        <h1>Descubra produtos em alta todos os dias.</h1>
-        <p>
-          Explore categorias, encontre tendências e pesquise vídeos no TikTok com 1 clique.
-          Tudo num visual elegante e rápido.
-        </p>
+      <div class="authGrid">
+        <!-- LEFT -->
+        <div class="left">
+          <h1 class="headline">Bem-vindo de volta!</h1>
+          <p class="sub">
+            Entre em sua conta ou crie uma nova em segundos.
+          </p>
 
-        <div class="auth-badges">
-          <div class="auth-badge">
-            <span class="dot"></span>
-            Atualização diária
-          </div>
-          <div class="auth-badge">
-            <span class="dot"></span>
-            Categorias inteligentes
-          </div>
-          <div class="auth-badge">
-            <span class="dot"></span>
-            TikTok Search automático
+          <div class="card">
+            <div class="tabs" role="tablist" aria-label="Login e cadastro">
+              <button class="tab is-active" id="tabLogin" role="tab" aria-selected="true" type="button">
+                Entrar
+              </button>
+              <button class="tab" id="tabSignup" role="tab" aria-selected="false" type="button">
+                Criar conta
+              </button>
+              <div class="tabs__underline" id="tabUnderline"></div>
+            </div>
+
+            <!-- LOGIN -->
+            <form id="loginForm" class="panel" autocomplete="on">
+              <label class="field">
+                <span class="ico" aria-hidden="true">👤</span>
+                <input id="loginEmail" type="email" placeholder="Seu e-mail" required autocomplete="email"/>
+              </label>
+
+              <label class="field">
+                <span class="ico" aria-hidden="true">🔒</span>
+                <input id="loginPass" type="password" placeholder="Sua senha" required autocomplete="current-password"/>
+                <button class="link" id="forgotBtn" type="button">Esqueceu sua senha?</button>
+              </label>
+
+              <button class="btn btn--primary" id="loginBtn" type="submit">
+                Entrar
+              </button>
+
+              <div class="or">
+                <span>Ou entre com</span>
+              </div>
+
+              <button class="btn btn--google" id="googleBtn" type="button">
+                <span class="gIcon" aria-hidden="true">G</span>
+                Continuar com Google
+              </button>
+
+              <p class="tiny">
+                Ao continuar, você concorda com nossos termos e políticas.
+              </p>
+
+              <p class="msg" id="msgLogin" aria-live="polite"></p>
+            </form>
+
+            <!-- SIGNUP -->
+            <form id="signupForm" class="panel is-hidden" autocomplete="on">
+              <label class="field">
+                <span class="ico" aria-hidden="true">👤</span>
+                <input id="signupEmail" type="email" placeholder="Seu e-mail" required autocomplete="email"/>
+              </label>
+
+              <label class="field">
+                <span class="ico" aria-hidden="true">🔒</span>
+                <input id="signupPass" type="password" placeholder="Crie uma senha" required autocomplete="new-password"/>
+              </label>
+
+              <label class="field">
+                <span class="ico" aria-hidden="true">🔒</span>
+                <input id="signupPass2" type="password" placeholder="Repita a senha" required autocomplete="new-password"/>
+              </label>
+
+              <button class="btn btn--primary" id="signupBtn" type="submit">
+                Criar conta
+              </button>
+
+              <div class="or">
+                <span>Ou crie com</span>
+              </div>
+
+              <button class="btn btn--google" id="googleBtn2" type="button">
+                <span class="gIcon" aria-hidden="true">G</span>
+                Continuar com Google
+              </button>
+
+              <p class="tiny">
+                Ao continuar, você concorda com nossos termos e políticas.
+              </p>
+
+              <p class="msg" id="msgSignup" aria-live="polite"></p>
+            </form>
           </div>
         </div>
 
-        <div class="auth-mock">
-          <div class="mock-header">
-            <div class="mock-pill"></div>
-            <div class="mock-pill"></div>
-            <div class="mock-pill"></div>
-          </div>
-          <div class="mock-grid">
-            <div class="mock-card"></div>
-            <div class="mock-card"></div>
-            <div class="mock-card"></div>
-            <div class="mock-card"></div>
-          </div>
-          <div class="mock-row">
-            <div class="mock-line w60"></div>
-            <div class="mock-line w40"></div>
+        <!-- RIGHT (ilustração estilo referência, sem imagem externa) -->
+        <div class="right" aria-hidden="true">
+          <div class="scene">
+            <div class="badge">25% <small>OFF</small></div>
+            <div class="floating heart">❤</div>
+            <div class="floating coin">💰</div>
+
+            <div class="platform"></div>
+
+            <div class="props">
+              <div class="box">
+                <div class="boxMark">S</div>
+              </div>
+              <div class="bag big"></div>
+              <div class="bag mid"></div>
+              <div class="bag small"></div>
+
+              <div class="headphone"></div>
+              <div class="shoe"></div>
+              <div class="shoe shoe2"></div>
+
+              <div class="bottle"></div>
+              <div class="lipstick"></div>
+            </div>
+
+            <div class="clouds"></div>
           </div>
         </div>
-
-        <p class="auth-mini">
-          Ao entrar, você acessa a vitrine completa e recursos do site.
-        </p>
       </div>
-    </aside>
+    </section>
+  </main>
 
-    <!-- Lado direito: formulário -->
-    <main class="auth-main">
-      <div class="auth-card">
-        <div class="auth-card-head">
-          <h2>Bem-vindo</h2>
-          <p>Entre na sua conta ou crie uma em segundos.</p>
-        </div>
-
-        <div class="auth-tabs">
-          <button class="auth-tab is-active" id="tabLogin" type="button">Entrar</button>
-          <button class="auth-tab" id="tabRegister" type="button">Criar conta</button>
-        </div>
-
-        <!-- Google -->
-        <button class="google-btn" id="googleBtn" type="button">
-          <span class="google-ico" aria-hidden="true">
-            <!-- “G” simples em SVG inline (sem libs) -->
-            <svg viewBox="0 0 48 48" width="18" height="18">
-              <path fill="#EA4335" d="M24 9.5c3.54 0 6.02 1.53 7.41 2.8l5.09-5.09C33.38 4.36 29.1 2.5 24 2.5 14.92 2.5 7.17 7.74 3.45 15.36l6.05 4.7C11.29 13.53 17.14 9.5 24 9.5z"/>
-              <path fill="#4285F4" d="M46.5 24.5c0-1.64-.15-2.83-.47-4.07H24v7.7h12.86c-.26 2-1.68 5.01-4.83 7.03l-.04.27 6.18 4.79.43.04c3.96-3.66 6.24-9.05 6.24-15.76z"/>
-              <path fill="#FBBC05" d="M9.5 28.06a14.53 14.53 0 0 1-.76-4.56c0-1.58.27-3.1.74-4.56l-.03-.31-6.16-4.77-.2.1A21.5 21.5 0 0 0 2.5 23.5c0 3.46.83 6.73 2.29 9.6l6.71-5.04z"/>
-              <path fill="#34A853" d="M24 45.5c6.1 0 11.22-2.01 14.96-5.48l-7.13-5.53c-1.91 1.33-4.47 2.25-7.83 2.25-6.85 0-12.69-4.03-14.49-9.56l-.29.02-6.28 4.86-.1.28C6.51 40.26 14.48 45.5 24 45.5z"/>
-            </svg>
-          </span>
-          <span>Continuar com Google</span>
-        </button>
-
-        <div class="auth-divider">
-          <span>ou</span>
-        </div>
-
-        <!-- Email/senha -->
-        <form id="form" class="auth-form">
-          <label class="auth-field">
-            <span>E-mail</span>
-            <input id="email" type="email" placeholder="voce@exemplo.com" required />
-          </label>
-
-          <label class="auth-field">
-            <span>Senha</span>
-            <input id="password" type="password" placeholder="mínimo 6 caracteres" minlength="6" required />
-          </label>
-
-          <button class="auth-submit" id="submit" type="submit">Entrar</button>
-
-          <p class="auth-msg" id="msg"></p>
-        </form>
-
-        <p class="auth-foot">
-          Ao continuar, você concorda com nossos termos e políticas.
-        </p>
-      </div>
-    </main>
-  </div>
-
+  <!-- Firebase config -->
   <script src="firebase-config.js"></script>
-  <script type="module" src="auth.js"></script>
+
+  <!-- Login logic -->
+  <script type="module" src="login.js"></script>
 </body>
 </html>
