@@ -1,10 +1,15 @@
-// app.js (vitrines) - ajustado: "Ver tudo" mostra todos e sem tag de categoria no modo Todos
+// app.js (vitrines) - FINAL: "Ver tudo" com infinite scroll + sem tags no modo Todos
 let ALL = [];
 let CATS = [];
 let activeCat = null;
 
 let viewCompact = false;
 let onlyFav = false;
+
+// "Ver tudo"
+let allFiltered = [];
+let allRenderedCount = 0;
+const PAGE_SIZE = 60;
 
 const favKey = "shoptrends:favs_v1";
 const getFavs = () => new Set(JSON.parse(localStorage.getItem(favKey) || "[]"));
@@ -70,11 +75,6 @@ function openModal(p) {
   modal.showModal();
 }
 
-/**
- * showCategoryTag:
- * - false => NÃO exibe a tag de categoria no card
- * - true  => exibe a tag (opcional)
- */
 function makeCard(p, { showCategoryTag }) {
   const favs = getFavs();
   const isFav = favs.has(p.sourceId);
@@ -113,17 +113,11 @@ function makeCard(p, { showCategoryTag }) {
         }
       </div>
 
-      ${
-        showCategoryTag
-          ? `<div class="tag">${escapeHtml(p.categoryName || "")}</div>`
-          : ``
-      }
+      ${showCategoryTag ? `<div class="tag">${escapeHtml(p.categoryName || "")}</div>` : ""}
 
       <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:10px;">
         <button class="btn btn-ghost" type="button">Ver</button>
-        <button class="btn btn-ghost" type="button" aria-label="Favoritar">${
-          isFav ? "♥" : "♡"
-        }</button>
+        <button class="btn btn-ghost" type="button" aria-label="Favoritar">${isFav ? "♥" : "♡"}</button>
       </div>
     </div>
   `;
@@ -143,6 +137,7 @@ function makeCard(p, { showCategoryTag }) {
     if (set.has(k)) set.delete(k);
     else set.add(k);
     setFavs(set);
+    // re-render tudo (mantém scroll load)
     renderAll();
   });
 
@@ -158,21 +153,59 @@ function makeCard(p, { showCategoryTag }) {
   return card;
 }
 
-/**
- * limit:
- * - null => renderiza TODOS
- * - number => limita
- */
-function fillGrid(id, items, limit, cardOpts) {
+function fillGridFixed(id, items, limit, cardOpts) {
   const grid = document.getElementById(id);
   if (!grid) return;
 
   grid.innerHTML = "";
-
-  const list = limit == null ? items : items.slice(0, limit);
-  list.forEach((p) => grid.appendChild(makeCard(p, cardOpts)));
-
+  items.slice(0, limit).forEach((p) => grid.appendChild(makeCard(p, cardOpts)));
   grid.classList.toggle("is-compact", viewCompact);
+}
+
+function ensureSentinel() {
+  const grid = document.getElementById("gridAll");
+  if (!grid) return null;
+
+  let sentinel = document.getElementById("gridAllSentinel");
+  if (!sentinel) {
+    sentinel = document.createElement("div");
+    sentinel.id = "gridAllSentinel";
+    sentinel.style.height = "1px";
+    sentinel.style.width = "100%";
+    grid.insertAdjacentElement("afterend", sentinel);
+  }
+  return sentinel;
+}
+
+function resetGridAll() {
+  const grid = document.getElementById("gridAll");
+  if (!grid) return;
+  grid.innerHTML = "";
+  allRenderedCount = 0;
+  renderMoreGridAll(); // primeira página
+}
+
+function renderMoreGridAll() {
+  const grid = document.getElementById("gridAll");
+  if (!grid) return;
+
+  const next = allFiltered.slice(allRenderedCount, allRenderedCount + PAGE_SIZE);
+  next.forEach((p) => {
+    // ✅ "Ver tudo" SEM tag
+    grid.appendChild(makeCard(p, { showCategoryTag: false }));
+  });
+
+  allRenderedCount += next.length;
+  grid.classList.toggle("is-compact", viewCompact);
+
+  // feedback no status
+  const total = allFiltered.length;
+  const status = document.getElementById("updateStatus");
+  if (status && total) {
+    // mantém o "Atualizado..." e adiciona progressinho
+    const base = status.textContent.split(" • ")[0];
+    status.textContent = `${base} • ${total} itens • exibindo ${Math.min(allRenderedCount, total)}/${total}`;
+  }
 }
 
 function populateSelectCats() {
@@ -247,7 +280,7 @@ function applyFilters() {
     list = list.filter((p) => favs.has(p.sourceId));
   }
 
-  // ordenação do "Ver tudo"
+  // ordenação
   if (sort === "price_asc") {
     list.sort((a, b) => (a.promoPrice ?? a.price) - (b.promoPrice ?? b.price));
   } else if (sort === "price_desc") {
@@ -274,10 +307,34 @@ function applyFilters() {
   return list;
 }
 
+let observer = null;
+
+function setupInfiniteScroll() {
+  const sentinel = ensureSentinel();
+  if (!sentinel) return;
+
+  if (observer) observer.disconnect();
+
+  observer = new IntersectionObserver(
+    (entries) => {
+      const entry = entries[0];
+      if (!entry.isIntersecting) return;
+
+      // carrega mais enquanto tiver
+      if (allRenderedCount < allFiltered.length) {
+        renderMoreGridAll();
+      }
+    },
+    { root: null, rootMargin: "1200px 0px", threshold: 0 }
+  );
+
+  observer.observe(sentinel);
+}
+
 function renderAll() {
   const list = applyFilters();
 
-  // vitrines (limitadas)
+  // vitrines (fixas e leves)
   const trending = [...list].sort((a, b) => {
     const ap = a.promoPrice != null ? 1 : 0;
     const bp = b.promoPrice != null ? 1 : 0;
@@ -291,13 +348,14 @@ function renderAll() {
 
   const deals = [...list].filter((p) => p.promoPrice != null && p.price);
 
-  // ✅ vitrines com tag (ok)
-  fillGrid("gridTrending", trending, 12, { showCategoryTag: true });
-  fillGrid("gridBest", best, 12, { showCategoryTag: true });
-  fillGrid("gridDeals", deals, 12, { showCategoryTag: true });
+  fillGridFixed("gridTrending", trending, 12, { showCategoryTag: true });
+  fillGridFixed("gridBest", best, 12, { showCategoryTag: true });
+  fillGridFixed("gridDeals", deals, 12, { showCategoryTag: true });
 
-  // ✅ "Ver tudo" SEM limite e SEM categoria dentro do card
-  fillGrid("gridAll", list, null, { showCategoryTag: false });
+  // ✅ Ver tudo = TODOS, mas com infinite scroll (pra não travar)
+  allFiltered = list;
+  resetGridAll();
+  setupInfiniteScroll();
 
   const hint = document.getElementById("updatedHint");
   if (hint) hint.textContent = "—";
@@ -355,9 +413,7 @@ function wireUI() {
   });
 }
 
-/**
- * products-live.js chama isso com a lista mesclada
- */
+// products-live.js chama isso com a lista mesclada
 window.renderProducts = function (items) {
   ALL = Array.isArray(items) ? items : [];
   populateSelectCats();
@@ -380,7 +436,8 @@ async function boot() {
   populateSelectCats();
   renderAll();
 
-  statusText(`Atualizado: ${data.updatedAt || "—"} • ${ALL.length} itens`);
+  // status inicial
+  statusText(`Atualizado: ${data.updatedAt || "—"}`);
 }
 
 boot().catch((e) => {
