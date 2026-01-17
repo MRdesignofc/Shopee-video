@@ -1,11 +1,18 @@
 {
-  "updatedAt": "2026-01-17T01:21:04.372Z",
-  "lastRun": {
-    "categorySlug": "beleza",
-    "categoryName": "Beleza",
-    "fetchedAt": "2026-01-17T01:21:04.372Z",
-    "added": 0,
-    "updated": 0
-  },
-  "items": []
+  "updatedAt": "2026-01-17 02:47:00 UTC",
+  "items": [
+    {
+      "source": "shopee_affiliate",
+      "sourceId": "1768618020763",
+      "title": "Produto em alta Shopee 1768618020763",
+      "imageUrl": "https://via.placeholder.com/600x600.png?text=Shopee+Trend",
+      "price": "55.81",
+      "promoPrice": null,
+      "productUrl": "https://shopee.com.br",
+      "categorySlug": "eletronicos",
+      "categoryName": "Eletrônicos & Acessórios",
+      "tiktokUrl": null,
+      "addedAt": "2026-01-17T02:47:00.763Z"
+    }
+  ]
 }
