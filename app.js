@@ -1,4 +1,4 @@
-// app.js (vitrines)
+// app.js (vitrines) - ajustado: "Ver tudo" mostra todos e sem tag de categoria no modo Todos
 let ALL = [];
 let CATS = [];
 let activeCat = null;
@@ -70,7 +70,12 @@ function openModal(p) {
   modal.showModal();
 }
 
-function makeCard(p) {
+/**
+ * showCategoryTag:
+ * - false => NÃO exibe a tag de categoria no card
+ * - true  => exibe a tag (opcional)
+ */
+function makeCard(p, { showCategoryTag }) {
   const favs = getFavs();
   const isFav = favs.has(p.sourceId);
 
@@ -108,7 +113,11 @@ function makeCard(p) {
         }
       </div>
 
-      <div class="tag">${escapeHtml(p.categoryName || "")}</div>
+      ${
+        showCategoryTag
+          ? `<div class="tag">${escapeHtml(p.categoryName || "")}</div>`
+          : ``
+      }
 
       <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:10px;">
         <button class="btn btn-ghost" type="button">Ver</button>
@@ -149,12 +158,20 @@ function makeCard(p) {
   return card;
 }
 
-function fillGrid(id, items, limit = 12) {
+/**
+ * limit:
+ * - null => renderiza TODOS
+ * - number => limita
+ */
+function fillGrid(id, items, limit, cardOpts) {
   const grid = document.getElementById(id);
   if (!grid) return;
 
   grid.innerHTML = "";
-  items.slice(0, limit).forEach((p) => grid.appendChild(makeCard(p)));
+
+  const list = limit == null ? items : items.slice(0, limit);
+  list.forEach((p) => grid.appendChild(makeCard(p, cardOpts)));
+
   grid.classList.toggle("is-compact", viewCompact);
 }
 
@@ -200,7 +217,6 @@ function renderChips() {
 
   el.appendChild(mk("Todos", null));
 
-  // Se existir categories.json, usa ele. Senão cria chips a partir dos itens.
   const catsFromFile = Array.isArray(CATS) && CATS.length > 0;
 
   if (catsFromFile) {
@@ -219,7 +235,6 @@ function applyFilters() {
   const selCat = document.getElementById("cat")?.value || "all";
   const sort = document.getElementById("sort")?.value || "trending";
 
-  // sincroniza categoria do select
   activeCat = selCat === "all" ? null : selCat;
 
   let list = [...ALL];
@@ -245,20 +260,15 @@ function applyFilters() {
         b.promoPrice != null && b.price ? Math.round((1 - b.promoPrice / b.price) * 100) : -1;
       return db - da;
     });
+  } else if (sort === "bestsellers") {
+    list.sort((a, b) => (a.promoPrice ?? a.price) - (b.promoPrice ?? b.price));
   } else {
-    // trending/bestsellers fallback sem dados de vendas:
-    // trending: itens com promo primeiro + menor preço
-    // bestsellers: menor preço (mais "comprável")
-    if (sort === "bestsellers") {
-      list.sort((a, b) => (a.promoPrice ?? a.price) - (b.promoPrice ?? b.price));
-    } else {
-      list.sort((a, b) => {
-        const ap = a.promoPrice != null ? 1 : 0;
-        const bp = b.promoPrice != null ? 1 : 0;
-        if (bp !== ap) return bp - ap;
-        return (a.promoPrice ?? a.price) - (b.promoPrice ?? b.price);
-      });
-    }
+    list.sort((a, b) => {
+      const ap = a.promoPrice != null ? 1 : 0;
+      const bp = b.promoPrice != null ? 1 : 0;
+      if (bp !== ap) return bp - ap;
+      return (a.promoPrice ?? a.price) - (b.promoPrice ?? b.price);
+    });
   }
 
   return list;
@@ -267,7 +277,7 @@ function applyFilters() {
 function renderAll() {
   const list = applyFilters();
 
-  // vitrines
+  // vitrines (limitadas)
   const trending = [...list].sort((a, b) => {
     const ap = a.promoPrice != null ? 1 : 0;
     const bp = b.promoPrice != null ? 1 : 0;
@@ -281,24 +291,23 @@ function renderAll() {
 
   const deals = [...list].filter((p) => p.promoPrice != null && p.price);
 
-  fillGrid("gridTrending", trending, 12);
-  fillGrid("gridBest", best, 12);
-  fillGrid("gridDeals", deals, 12);
-  fillGrid("gridAll", list, 48);
+  // ✅ vitrines com tag (ok)
+  fillGrid("gridTrending", trending, 12, { showCategoryTag: true });
+  fillGrid("gridBest", best, 12, { showCategoryTag: true });
+  fillGrid("gridDeals", deals, 12, { showCategoryTag: true });
 
-  // hint
+  // ✅ "Ver tudo" SEM limite e SEM categoria dentro do card
+  fillGrid("gridAll", list, null, { showCategoryTag: false });
+
   const hint = document.getElementById("updatedHint");
   if (hint) hint.textContent = "—";
 
-  // chips
   renderChips();
 }
 
 function wireUI() {
   document.getElementById("q")?.addEventListener("input", renderAll);
-  document.getElementById("cat")?.addEventListener("change", () => {
-    renderAll();
-  });
+  document.getElementById("cat")?.addEventListener("change", renderAll);
   document.getElementById("sort")?.addEventListener("change", renderAll);
 
   document.getElementById("toggleView")?.addEventListener("click", (e) => {
@@ -313,7 +322,7 @@ function wireUI() {
     renderAll();
   });
 
-  // busca antiga do header: espelha pro campo novo
+  // busca do header espelha pro campo novo
   document.getElementById("search")?.addEventListener("input", (e) => {
     const q = document.getElementById("q");
     if (q) q.value = e.target.value || "";
@@ -347,7 +356,7 @@ function wireUI() {
 }
 
 /**
- * ✅ products-live.js chama isso com a lista mesclada
+ * products-live.js chama isso com a lista mesclada
  */
 window.renderProducts = function (items) {
   ALL = Array.isArray(items) ? items : [];
@@ -358,7 +367,6 @@ window.renderProducts = function (items) {
 async function boot() {
   wireUI();
 
-  // carrega categories.json se existir
   try {
     const cats = await fetchJson("data/categories.json");
     CATS = Array.isArray(cats) ? cats : [];
@@ -366,14 +374,13 @@ async function boot() {
     CATS = [];
   }
 
-  const { url, data } = await loadProductsJson();
+  const { data } = await loadProductsJson();
   ALL = Array.isArray(data.items) ? data.items : [];
 
   populateSelectCats();
   renderAll();
 
   statusText(`Atualizado: ${data.updatedAt || "—"} • ${ALL.length} itens`);
-  console.log("[ShopTrends] produtos carregados de:", url, "itens:", ALL.length);
 }
 
 boot().catch((e) => {
