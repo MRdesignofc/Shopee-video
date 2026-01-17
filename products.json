@@ -1,6 +1,19 @@
 {
-  "updatedAt": "2026-01-17 02:47:00 UTC",
+  "updatedAt": "2026-01-17 02:51:48 UTC",
   "items": [
+    {
+      "source": "shopee_affiliate",
+      "sourceId": "1768618308583",
+      "title": "Produto em alta Shopee 1768618308583",
+      "imageUrl": "https://via.placeholder.com/600x600.png?text=Shopee+Trend",
+      "price": "201.43",
+      "promoPrice": null,
+      "productUrl": "https://shopee.com.br",
+      "categorySlug": "eletronicos",
+      "categoryName": "Eletrônicos & Acessórios",
+      "tiktokUrl": null,
+      "addedAt": "2026-01-17T02:51:48.583Z"
+    },
     {
       "source": "shopee_affiliate",
       "sourceId": "1768618020763",
