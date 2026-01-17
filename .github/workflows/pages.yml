@@ -12,21 +12,25 @@ permissions:
   pages: write
   id-token: write
 
+# Evita conflito de deploy quando houver pushes em sequência
 concurrency:
   group: "pages"
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    # 🔴 ISSO AQUI É O QUE ESTAVA FALTANDO
+    # Necessário para o Pages criar/atualizar deployments corretamente
     environment:
       name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -37,4 +41,5 @@ jobs:
           path: "."
 
       - name: Deploy
+        id: deployment
         uses: actions/deploy-pages@v4
