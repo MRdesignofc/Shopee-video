@@ -2,13 +2,17 @@ let ALL = [];
 let CATS = [];
 let activeCat = null;
 
-// all = normal | now = vendendo agora | best = mais vendidos
-let mode = "all";
+let viewCompact = false;
+let onlyFav = false;
 
 const fmtBRL = (n) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
     Number(n ?? 0) || 0
   );
+
+const favKey = "shoptrends:favs_v1";
+const getFavs = () => new Set(JSON.parse(localStorage.getItem(favKey) || "[]"));
+const setFavs = (set) => localStorage.setItem(favKey, JSON.stringify([...set]));
 
 function escapeHtml(s) {
   return (s || "")
@@ -18,13 +22,12 @@ function escapeHtml(s) {
 }
 
 async function fetchJsonTry(url) {
-  const res = await fetch(url, { cache: "no-store" });
+  const res = await fetch(`${url}?t=${Date.now()}`, { cache: "no-store" });
   if (!res.ok) throw new Error(`Falha ao carregar: ${url}`);
   return res.json();
 }
 
 async function loadProductsJson() {
-  // ✅ tenta o caminho novo primeiro, depois o antigo
   try {
     return await fetchJsonTry("./products.json");
   } catch {
@@ -32,149 +35,54 @@ async function loadProductsJson() {
   }
 }
 
-async function load() {
-  const [cats, products] = await Promise.all([
-    fetchJsonTry("data/categories.json"),
-    loadProductsJson(),
-  ]);
-
-  CATS = Array.isArray(cats) ? cats : [];
-  ALL = Array.isArray(products.items) ? products.items : [];
-
-  // ✅ Ajustado: no HTML agora é updateStatus
-  const status = document.getElementById("updateStatus");
-  if (status) {
-    status.textContent = products.updatedAt
-      ? `Atualizado: ${products.updatedAt}`
-      : "Sem atualização";
-  }
-
-  renderCats();
-  render();
+function statusText(text) {
+  const el = document.getElementById("updateStatus");
+  if (el) el.textContent = text;
 }
 
-/**
- * ✅ IMPORTANTÍSSIMO:
- * products-live.js chama window.renderProducts(merged)
- * então aqui só atualizamos ALL e renderizamos
- */
-window.renderProducts = function (items) {
-  ALL = Array.isArray(items) ? items : [];
-  render();
-};
-
-function renderCats() {
-  const el = document.getElementById("cats");
-  if (!el) return;
-
-  el.innerHTML = "";
-
-  // Botão "Todos"
-  el.appendChild(mkCatButton("Todos", null));
-
-  CATS.forEach((c) => el.appendChild(mkCatButton(c.name, c.slug)));
+function normalizeItems(items, updatedAt) {
+  return (items || [])
+    .map((p) => ({
+      ...p,
+      source: p.source || "shopee_affiliate",
+      sourceId: String(p.sourceId ?? ""),
+      title: (p.title || "").toString(),
+      imageUrl: p.imageUrl || "",
+      productUrl: p.productUrl || "",
+      price: Number(p.price ?? 0) || 0,
+      promoPrice: p.promoPrice == null ? null : Number(p.promoPrice),
+      categorySlug: p.categorySlug || "geral",
+      categoryName: p.categoryName || "Geral",
+      addedAt: p.addedAt || updatedAt || null,
+    }))
+    .filter((p) => p.sourceId && p.title);
 }
 
-function mkCatButton(name, slug) {
-  const b = document.createElement("button");
-
-  const isActive =
-    (mode === "now" && slug === "vendendo-agora") ||
-    (mode === "best" && slug === "mais-vendidos") ||
-    (mode === "all" && activeCat === slug);
-
-  b.className = "chip" + (isActive ? " active" : "");
-  b.textContent = name;
-
-  // Regras especiais
-  if (slug === "vendendo-agora") {
-    b.onclick = () => {
-      mode = "now";
-      activeCat = null;
-      renderCats();
-      render();
-    };
-    return b;
-  }
-
-  if (slug === "mais-vendidos") {
-    b.onclick = () => {
-      mode = "best";
-      activeCat = null;
-      renderCats();
-      render();
-    };
-    return b;
-  }
-
-  // "Todos"
-  if (slug === null) {
-    b.onclick = () => {
-      mode = "all";
-      activeCat = null;
-      renderCats();
-      render();
-    };
-    return b;
-  }
-
-  // Categorias normais
-  b.onclick = () => {
-    mode = "all";
-    activeCat = slug;
-    renderCats();
-    render();
-  };
-
-  return b;
+function scoreTrending(p) {
+  // sem sold_24h: usamos preço promo + recência (addedAt) como heurística
+  const promo = p.promoPrice == null ? p.price : p.promoPrice;
+  const discount = p.promoPrice != null && p.price ? (p.price - p.promoPrice) : 0;
+  const recency = Date.parse(p.addedAt || 0) || 0;
+  return (discount * 100) + (recency / 1e11) - promo;
 }
 
-function render() {
-  const q = (document.getElementById("search")?.value || "")
-    .toLowerCase()
-    .trim();
+function scoreBest(p) {
+  // fallback: “mais vendidos” -> menor preço + presença de promo
+  const promo = p.promoPrice == null ? p.price : p.promoPrice;
+  const hasPromo = p.promoPrice != null ? 1 : 0;
+  return (hasPromo * 100000) - promo;
+}
 
-  const grid = document.getElementById("grid");
-  if (!grid) return;
+function scoreDeals(p) {
+  // maior desconto
+  if (p.promoPrice == null || !p.price) return -Infinity;
+  const pct = Math.round((1 - (p.promoPrice / p.price)) * 100);
+  return pct;
+}
 
-  grid.innerHTML = "";
-
-  let items = ALL.filter((p) => {
-    const okCat = mode !== "all" ? true : (!activeCat || p.categorySlug === activeCat);
-    const okQ = !q || (p.title || "").toLowerCase().includes(q);
-    return okCat && okQ;
-  });
-
-  // Modos inteligentes
-  if (mode === "now") {
-    items = items.slice(0, 40);
-  } else if (mode === "best") {
-    items = [...items]
-      .sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0))
-      .slice(0, 40);
-  }
-
-  items.forEach((p) => {
-    const card = document.createElement("article");
-    card.className = "card";
-
-    card.innerHTML = `
-      <img src="${p.imageUrl || ""}" alt="${escapeHtml(p.title)}" loading="lazy"/>
-      <div class="pad">
-        <h3>${escapeHtml(p.title)}</h3>
-
-        <div class="price-row">
-          <p class="price">${fmtBRL(p.promoPrice ?? p.price)}</p>
-          <span class="small">Shopee</span>
-        </div>
-
-        <div class="tag">${escapeHtml(p.categoryName || "")}</div>
-      </div>
-    `;
-
-    card.onclick = () => openModal(p);
-    grid.appendChild(card);
-  });
+function buildTikTokUrl(title) {
+  const q = encodeURIComponent(`${title} review unboxing testando`);
+  return `https://www.tiktok.com/search?q=${q}`;
 }
 
 function openModal(p) {
@@ -194,52 +102,250 @@ function openModal(p) {
   if (buy) buy.href = p.productUrl || "#";
   if (cat) cat.textContent = p.categoryName || "";
 
-  const query = p.title || "produto shopee";
   if (tiktok) {
-    tiktok.href = `https://www.tiktok.com/search?q=${encodeURIComponent(query)}`;
+    tiktok.href = p.tiktokUrl || buildTikTokUrl(p.title || "produto shopee");
   }
 
   modal.showModal();
 }
 
-// Busca em tempo real
-document.getElementById("search")?.addEventListener("input", render);
+function makeCard(p) {
+  const favs = getFavs();
+  const isFav = favs.has(p.sourceId);
 
-// Fechar modal
-document.getElementById("close")?.addEventListener("click", () => {
-  document.getElementById("modal")?.close();
-});
-document.getElementById("modal")?.addEventListener("click", (e) => {
-  if (e.target?.id === "modal") document.getElementById("modal")?.close();
-});
+  const promo = p.promoPrice ?? null;
+  const showOld = promo != null && p.price;
+  const pct =
+    showOld && p.price
+      ? Math.max(0, Math.round((1 - promo / p.price) * 100))
+      : null;
 
-// Botões do hero
-const btnTop = document.getElementById("btnTop");
-if (btnTop) {
-  btnTop.onclick = () => {
-    mode = "all";
+  const card = document.createElement("article");
+  card.className = "card";
+  card.tabIndex = 0;
+
+  card.innerHTML = `
+    <img src="${p.imageUrl || ""}" alt="${escapeHtml(p.title)}" loading="lazy"/>
+    <div class="pad">
+      <h3>${escapeHtml(p.title)}</h3>
+
+      <div class="price-row" style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;">
+        <div>
+          <p class="price" style="margin:0;">${fmtBRL(promo ?? p.price)}</p>
+          ${showOld ? `<span class="small" style="text-decoration:line-through;opacity:.7;">${fmtBRL(p.price)}</span>` : ""}
+        </div>
+        ${pct != null ? `<span class="badge" style="background:rgba(238,77,45,.08);color:#ee4d2d;border:1px solid rgba(238,77,45,.25)">-${pct}%</span>` : ""}
+      </div>
+
+      <div class="tag">${escapeHtml(p.categoryName || "")}</div>
+
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;margin-top:10px;">
+        <button class="btn btn-ghost" type="button">Ver</button>
+        <button class="btn btn-ghost" type="button" aria-label="Favoritar">${isFav ? "♥" : "♡"}</button>
+      </div>
+    </div>
+  `;
+
+  const favBtn = card.querySelectorAll("button")[1];
+  favBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const set = getFavs();
+    const k = p.sourceId;
+    if (set.has(k)) set.delete(k);
+    else set.add(k);
+    setFavs(set);
+    renderAll();
+  });
+
+  const open = () => openModal(p);
+  card.addEventListener("click", open);
+  card.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      open();
+    }
+  });
+
+  return card;
+}
+
+function fillGrid(id, items, limit = 12) {
+  const grid = document.getElementById(id);
+  if (!grid) return;
+  grid.innerHTML = "";
+  items.slice(0, limit).forEach((p) => grid.appendChild(makeCard(p)));
+  if (viewCompact) grid.classList.add("is-compact");
+  else grid.classList.remove("is-compact");
+}
+
+function renderCats() {
+  const el = document.getElementById("cats");
+  if (!el) return;
+  el.innerHTML = "";
+
+  // chips
+  el.appendChild(mkChip("Todos", null));
+  CATS.forEach((c) => el.appendChild(mkChip(c.name, c.slug)));
+}
+
+function mkChip(name, slug) {
+  const b = document.createElement("button");
+  const isActive = activeCat === slug || (slug === null && activeCat === null);
+  b.className = "chip" + (isActive ? " active" : "");
+  b.textContent = name;
+  b.onclick = () => {
+    activeCat = slug;
+    const sel = document.getElementById("cat");
+    if (sel) sel.value = slug || "all";
+    renderCats();
+    renderAll();
+  };
+  return b;
+}
+
+function populateSelectCats() {
+  const sel = document.getElementById("cat");
+  if (!sel) return;
+
+  const cats = Array.from(
+    new Map(
+      ALL.map((p) => [p.categorySlug, p.categoryName]).filter(([slug]) => slug)
+    ).entries()
+  ).map(([slug, name]) => ({ slug, name }));
+
+  cats.sort((a, b) => a.name.localeCompare(b.name));
+
+  sel.innerHTML = `<option value="all">Todas categorias</option>` + cats
+    .map((c) => `<option value="${c.slug}">${c.name}</option>`)
+    .join("");
+}
+
+function applyFilters() {
+  const q = (document.getElementById("q")?.value || "").toLowerCase().trim();
+  const selCat = document.getElementById("cat")?.value || "all";
+  const sort = document.getElementById("sort")?.value || "trending";
+
+  // sincroniza chip com select (se usuário mexer no select)
+  activeCat = selCat === "all" ? null : selCat;
+
+  let list = ALL.filter((p) => {
+    const okCat = !activeCat || p.categorySlug === activeCat;
+    const okQ = !q || (p.title || "").toLowerCase().includes(q);
+    return okCat && okQ;
+  });
+
+  if (onlyFav) {
+    const favs = getFavs();
+    list = list.filter((p) => favs.has(p.sourceId));
+  }
+
+  // ordenação do “Ver tudo”
+  if (sort === "bestsellers") list.sort((a, b) => scoreBest(b) - scoreBest(a));
+  else if (sort === "discount") list.sort((a, b) => scoreDeals(b) - scoreDeals(a));
+  else if (sort === "price_asc") list.sort((a, b) => (a.promoPrice ?? a.price) - (b.promoPrice ?? b.price));
+  else if (sort === "price_desc") list.sort((a, b) => (b.promoPrice ?? b.price) - (a.promoPrice ?? a.price));
+  else list.sort((a, b) => scoreTrending(b) - scoreTrending(a));
+
+  return list;
+}
+
+function renderAll() {
+  // chips
+  renderCats();
+
+  const list = applyFilters();
+
+  const trending = [...list].sort((a, b) => scoreTrending(b) - scoreTrending(a));
+  const best = [...list].sort((a, b) => scoreBest(b) - scoreBest(a));
+  const deals = [...list].sort((a, b) => scoreDeals(b) - scoreDeals(a));
+
+  fillGrid("gridTrending", trending, 12);
+  fillGrid("gridBest", best, 12);
+  fillGrid("gridDeals", deals, 12);
+  fillGrid("gridAll", list, 48);
+
+  // hint atualizado
+  const hint = document.getElementById("updatedHint");
+  if (hint) hint.textContent = "—";
+}
+
+function wireUI() {
+  document.getElementById("q")?.addEventListener("input", renderAll);
+  document.getElementById("cat")?.addEventListener("change", () => {
+    renderAll();
+  });
+  document.getElementById("sort")?.addEventListener("change", renderAll);
+
+  document.getElementById("toggleView")?.addEventListener("click", (e) => {
+    viewCompact = !viewCompact;
+    e.currentTarget.setAttribute("aria-pressed", String(viewCompact));
+    renderAll();
+  });
+
+  document.getElementById("onlyFav")?.addEventListener("click", (e) => {
+    onlyFav = !onlyFav;
+    e.currentTarget.setAttribute("aria-pressed", String(onlyFav));
+    renderAll();
+  });
+
+  // manter seu modal fechando
+  document.getElementById("close")?.addEventListener("click", () => {
+    document.getElementById("modal")?.close();
+  });
+  document.getElementById("modal")?.addEventListener("click", (e) => {
+    if (e.target?.id === "modal") document.getElementById("modal")?.close();
+  });
+
+  // Botões do hero (mantém)
+  document.getElementById("btnTop")?.addEventListener("click", () => {
     activeCat = null;
-    const s = document.getElementById("search");
-    if (s) s.value = "";
-    renderCats();
-    render();
-  };
-}
+    const q = document.getElementById("q");
+    if (q) q.value = "";
+    const sel = document.getElementById("cat");
+    if (sel) sel.value = "all";
+    renderAll();
+  });
 
-const btnMini = document.getElementById("btnMini");
-if (btnMini) {
-  btnMini.onclick = () => {
-    mode = "all";
+  document.getElementById("btnMini")?.addEventListener("click", () => {
     activeCat = "miniaturas";
-    const s = document.getElementById("search");
-    if (s) s.value = "";
-    renderCats();
-    render();
-  };
+    const sel = document.getElementById("cat");
+    if (sel) sel.value = "miniaturas";
+    renderAll();
+  });
 }
 
-load().catch((e) => {
+/**
+ * ✅ products-live.js chama isso
+ */
+window.renderProducts = function (items) {
+  ALL = Array.isArray(items) ? items : [];
+  populateSelectCats();
+  renderAll();
+};
+
+async function boot() {
+  wireUI();
+
+  // carrega categorias/chips (se existir)
+  try {
+    const cats = await fetchJsonTry("data/categories.json");
+    CATS = Array.isArray(cats) ? cats : [];
+  } catch {
+    CATS = [];
+  }
+
+  // carregamento inicial dos produtos (antes do updater)
+  const products = await loadProductsJson();
+  const updatedAt = products.updatedAt ? products.updatedAt : null;
+
+  ALL = normalizeItems(products.items || [], updatedAt);
+
+  statusText(updatedAt ? `Atualizado: ${updatedAt}` : "Atualizado");
+  populateSelectCats();
+  renderAll();
+}
+
+boot().catch((e) => {
   console.error(e);
-  const status = document.getElementById("updateStatus");
-  if (status) status.textContent = "❌ Erro ao carregar dados";
+  statusText("❌ Erro ao carregar produtos");
 });
