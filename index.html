@@ -14,7 +14,7 @@
 <body class="page">
 
   <!-- Header -->
-  <header class="topbar">
+  <header class="topbar" role="banner">
     <div class="wrap topbar__inner">
       <a class="brand" href="#" onclick="return false;">
         <img src="favicon.png" alt="Shop Trends" class="brand__logo">
@@ -24,7 +24,7 @@
         </div>
       </a>
 
-      <!-- Botão mobile menu -->
+      <!-- Mobile: toggle do menu -->
       <button class="iconBtn iconBtn--menu" id="menuBtn" type="button"
               aria-label="Abrir menu" aria-expanded="false" aria-controls="topnav">
         ☰
@@ -38,46 +38,52 @@
       </nav>
 
       <div class="topbar__right">
+        <!-- app.js usa #meta -->
         <div class="pill" id="meta">Atualizando...</div>
-        <button class="iconBtn" id="cartBtn" type="button" aria-label="Carrinho" title="Carrinho">
-          🛒
-        </button>
-        <button class="iconBtn" id="userBtn" type="button" aria-label="Conta" title="Conta">
-          👤
-        </button>
+
+        <button class="iconBtn" id="cartBtn" type="button" aria-label="Carrinho" title="Carrinho">🛒</button>
+        <button class="iconBtn" id="userBtn" type="button" aria-label="Conta" title="Conta">👤</button>
+
         <button class="btn btn--ghost" id="logoutBtn" type="button">Sair</button>
       </div>
     </div>
 
-    <!-- Overlay mobile -->
+    <!-- Overlay do menu mobile -->
     <div class="navOverlay" id="navOverlay" hidden></div>
   </header>
 
-  <!-- Hero / Landing -->
-  <section class="hero">
+  <!-- Hero -->
+  <section class="hero" aria-label="Destaque">
     <div class="wrap hero__grid">
       <div class="hero__copy">
-        <div class="hero__kicker">Os Melhores Ofertas para Você!</div>
+        <div class="hero__kicker">Ofertas em alta, atualizadas automaticamente</div>
+
         <h1 class="hero__title">
           Produtos da <span>Shopee</span>
         </h1>
 
+        <div class="hero__sub">
+          Encontre tendências, melhores vendidos e promoções com um clique.
+        </div>
+
+        <!-- app.js usa #q e #btnSearch -->
         <div class="heroSearch" role="search">
           <input id="q" class="heroSearch__input" type="search"
-                 placeholder="Buscar produtos..." autocomplete="off" />
+                 placeholder="Buscar produtos, marcas, categorias..." autocomplete="off" />
           <button id="btnSearch" class="heroSearch__btn" type="button">Buscar</button>
         </div>
 
-        <div class="heroCats" aria-label="Atalhos de categorias">
-          <!-- preenchido via JS -->
-        </div>
+        <!-- preenchido via app.js (renderHeroShortcuts) -->
+        <div class="heroCats" aria-label="Atalhos de categorias"></div>
 
-        <div class="heroBar">
+        <div class="heroBar" role="note" aria-label="Chamada de ofertas">
           <div class="heroBar__text">Frete grátis e descontos imperdíveis!</div>
+          <!-- app.js usa #btnDeals -->
           <button class="btn btn--primary" id="btnDeals" type="button">Ver ofertas</button>
         </div>
       </div>
 
+      <!-- Arte: mantém o impacto no desktop, e o CSS cuida do mobile -->
       <div class="hero__art" aria-hidden="true">
         <div class="artCard">
           <div class="artCard__badge">50% OFF</div>
@@ -97,11 +103,13 @@
     <div class="hero__clouds" aria-hidden="true"></div>
   </section>
 
-  <!-- Chips (modo de navegação de produtos) -->
+  <!-- Chips Row -->
   <section class="wrap chipsRow" aria-label="Filtros principais">
+    <!-- app.js usa #cats -->
     <div id="cats" class="chips"></div>
 
     <div class="chipsRow__actions">
+      <!-- app.js usa #toggleView e #onlyFav -->
       <button id="toggleView" class="btn btn--ghost" type="button" aria-pressed="false">
         Miniaturas
       </button>
@@ -111,14 +119,15 @@
     </div>
   </section>
 
-  <!-- Controles (busca / sort / cat) -->
-  <section class="wrap controls">
+  <!-- Controls -->
+  <section class="wrap controls" aria-label="Controles de listagem">
     <div class="controls__left">
-      <select id="cat" class="select">
+      <!-- app.js usa #cat e #sort -->
+      <select id="cat" class="select" aria-label="Categoria">
         <option value="all">Todas categorias</option>
       </select>
 
-      <select id="sort" class="select">
+      <select id="sort" class="select" aria-label="Ordenação">
         <option value="relevance">Relevância</option>
         <option value="newest">Vendendo agora</option>
         <option value="bestsellers">Mais vendidos</option>
@@ -129,6 +138,7 @@
     </div>
 
     <div class="controls__right">
+      <!-- app.js usa #loadingPill -->
       <div class="loadingPill" id="loadingPill" hidden>
         <span class="dot"></span> Carregando...
       </div>
@@ -136,16 +146,17 @@
   </section>
 
   <!-- Conteúdo -->
-  <main class="wrap content">
+  <main class="wrap content" role="main">
 
-    <!-- HOME (vitrines) -->
-    <section id="homeView" class="shelves">
+    <!-- HOME vitrines -->
+    <!-- app.js usa #homeView, #gridNow, #gridBest, #gridDeals, #hintNow, #hintBest, #hintDeals -->
+    <section id="homeView" class="shelves" aria-label="Vitrines">
       <div class="shelf">
         <div class="shelf__head">
           <h2 class="shelf__title">Vendendo agora</h2>
           <span class="shelf__hint" id="hintNow">—</span>
         </div>
-        <div class="grid" id="gridNow"></div>
+        <div class="grid" id="gridNow" aria-label="Grid Vendendo agora"></div>
       </div>
 
       <div class="shelf">
@@ -153,7 +164,7 @@
           <h2 class="shelf__title">Mais vendidos</h2>
           <span class="shelf__hint" id="hintBest">—</span>
         </div>
-        <div class="grid" id="gridBest"></div>
+        <div class="grid" id="gridBest" aria-label="Grid Mais vendidos"></div>
       </div>
 
       <div class="shelf">
@@ -161,23 +172,22 @@
           <h2 class="shelf__title">Ofertas</h2>
           <span class="shelf__hint" id="hintDeals">—</span>
         </div>
-        <div class="grid" id="gridDeals"></div>
+        <div class="grid" id="gridDeals" aria-label="Grid Ofertas"></div>
       </div>
     </section>
 
-    <!-- LISTAGEM (Todos / categoria / modo now/best/deals) -->
-    <section id="listView" class="listView" hidden>
+    <!-- LISTAGEM -->
+    <!-- app.js usa #listView, #listTitle, #listSub, #gridAll, #loadMoreBtn, #loadMoreHint -->
+    <section id="listView" class="listView" hidden aria-label="Lista completa">
       <div class="listHead">
         <h2 class="listHead__title" id="listTitle">Todos os produtos</h2>
         <div class="listHead__sub" id="listSub">—</div>
       </div>
 
-      <div class="grid" id="gridAll"></div>
+      <div class="grid" id="gridAll" aria-label="Grid Produtos"></div>
 
       <div class="loadMore">
-        <button class="btn btn--primary" id="loadMoreBtn" type="button">
-          Carregar mais
-        </button>
+        <button class="btn btn--primary" id="loadMoreBtn" type="button">Carregar mais</button>
         <div class="loadMore__hint" id="loadMoreHint"></div>
       </div>
     </section>
@@ -188,7 +198,8 @@
   </main>
 
   <!-- Modal -->
-  <dialog id="modal" class="modal">
+  <!-- app.js usa: #modal #close #m_img #m_title #m_price #m_cat #m_buy #m_tiktok -->
+  <dialog id="modal" class="modal" aria-label="Detalhes do produto">
     <div class="modal__inner">
       <button class="modal__close" id="close" aria-label="Fechar">×</button>
 
@@ -221,46 +232,47 @@
   <!-- Guard (OBRIGATÓRIO) -->
   <script type="module" src="guard.js"></script>
 
-  <!-- App -->
+  <!-- App (login/logout + createShopTrendsApp) -->
   <script type="module" src="products-live.js"></script>
 
-  <!-- Menu Mobile (não interfere nos seus módulos) -->
+  <!-- Menu mobile (isolado; não interfere no app.js) -->
   <script>
-    (function(){
-      const btn = document.getElementById('menuBtn');
-      const nav = document.getElementById('topnav');
-      const overlay = document.getElementById('navOverlay');
+    (function () {
+      const btn = document.getElementById("menuBtn");
+      const nav = document.getElementById("topnav");
+      const overlay = document.getElementById("navOverlay");
 
       if (!btn || !nav || !overlay) return;
 
-      function openNav(){
-        nav.classList.add('is-open');
+      function openNav() {
+        nav.classList.add("is-open");
         overlay.hidden = false;
-        btn.setAttribute('aria-expanded', 'true');
-        document.documentElement.classList.add('noScroll');
+        btn.setAttribute("aria-expanded", "true");
+        document.documentElement.classList.add("noScroll");
       }
-      function closeNav(){
-        nav.classList.remove('is-open');
+      function closeNav() {
+        nav.classList.remove("is-open");
         overlay.hidden = true;
-        btn.setAttribute('aria-expanded', 'false');
-        document.documentElement.classList.remove('noScroll');
+        btn.setAttribute("aria-expanded", "false");
+        document.documentElement.classList.remove("noScroll");
       }
 
-      btn.addEventListener('click', function(){
-        nav.classList.contains('is-open') ? closeNav() : openNav();
+      btn.addEventListener("click", function () {
+        nav.classList.contains("is-open") ? closeNav() : openNav();
       });
 
-      overlay.addEventListener('click', closeNav);
+      overlay.addEventListener("click", closeNav);
 
-      nav.addEventListener('click', function(e){
-        const a = e.target.closest('a');
+      nav.addEventListener("click", function (e) {
+        const a = e.target.closest("a");
         if (a) closeNav();
       });
 
-      window.addEventListener('resize', function(){
-        if (window.matchMedia('(min-width: 981px)').matches) closeNav();
+      window.addEventListener("resize", function () {
+        if (window.matchMedia("(min-width: 981px)").matches) closeNav();
       });
     })();
   </script>
+
 </body>
 </html>
