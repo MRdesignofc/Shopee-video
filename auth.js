@@ -30,16 +30,12 @@ function setMode(next) {
   msg.textContent = "";
 
   if (mode === "login") {
-    tabLogin.classList.remove("btn-ghost");
-    tabLogin.classList.add("btn");
-    tabRegister.classList.remove("btn");
-    tabRegister.classList.add("btn-ghost");
+    tabLogin.classList.add("is-active");
+    tabRegister.classList.remove("is-active");
     submitBtn.textContent = "Entrar";
   } else {
-    tabRegister.classList.remove("btn-ghost");
-    tabRegister.classList.add("btn");
-    tabLogin.classList.remove("btn");
-    tabLogin.classList.add("btn-ghost");
+    tabRegister.classList.add("is-active");
+    tabLogin.classList.remove("is-active");
     submitBtn.textContent = "Criar conta";
   }
 }
