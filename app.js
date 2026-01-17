@@ -2,34 +2,74 @@ let ALL = [];
 let CATS = [];
 let activeCat = null;
 
-// Opção A: modos "inteligentes" sem depender de flags no JSON
 // all = normal | now = vendendo agora | best = mais vendidos
 let mode = "all";
 
 const fmtBRL = (n) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n ?? 0);
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+    Number(n ?? 0) || 0
+  );
+
+function escapeHtml(s) {
+  return (s || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
+}
+
+async function fetchJsonTry(url) {
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Falha ao carregar: ${url}`);
+  return res.json();
+}
+
+async function loadProductsJson() {
+  // ✅ tenta o caminho novo primeiro, depois o antigo
+  try {
+    return await fetchJsonTry("./products.json");
+  } catch {
+    return await fetchJsonTry("data/products.json");
+  }
+}
 
 async function load() {
   const [cats, products] = await Promise.all([
-    fetch("data/categories.json").then((r) => r.json()),
-    fetch("data/products.json").then((r) => r.json()),
+    fetchJsonTry("data/categories.json"),
+    loadProductsJson(),
   ]);
 
-  CATS = cats;
-  ALL = products.items || [];
+  CATS = Array.isArray(cats) ? cats : [];
+  ALL = Array.isArray(products.items) ? products.items : [];
 
-  const meta = document.getElementById("meta");
-  meta.textContent = products.updatedAt ? `Atualizado: ${products.updatedAt}` : "Sem atualização";
+  // ✅ Ajustado: no HTML agora é updateStatus
+  const status = document.getElementById("updateStatus");
+  if (status) {
+    status.textContent = products.updatedAt
+      ? `Atualizado: ${products.updatedAt}`
+      : "Sem atualização";
+  }
 
   renderCats();
   render();
 }
 
+/**
+ * ✅ IMPORTANTÍSSIMO:
+ * products-live.js chama window.renderProducts(merged)
+ * então aqui só atualizamos ALL e renderizamos
+ */
+window.renderProducts = function (items) {
+  ALL = Array.isArray(items) ? items : [];
+  render();
+};
+
 function renderCats() {
   const el = document.getElementById("cats");
+  if (!el) return;
+
   el.innerHTML = "";
 
-  // Botão "Todos" reseta modo e filtros
+  // Botão "Todos"
   el.appendChild(mkCatButton("Todos", null));
 
   CATS.forEach((c) => el.appendChild(mkCatButton(c.name, c.slug)));
@@ -38,9 +78,6 @@ function renderCats() {
 function mkCatButton(name, slug) {
   const b = document.createElement("button");
 
-  // active visual:
-  // - se mode for now/best, marca ativo pelo slug correspondente
-  // - se mode for all, marca ativo pela categoria selecionada
   const isActive =
     (mode === "now" && slug === "vendendo-agora") ||
     (mode === "best" && slug === "mais-vendidos") ||
@@ -49,7 +86,7 @@ function mkCatButton(name, slug) {
   b.className = "chip" + (isActive ? " active" : "");
   b.textContent = name;
 
-  // Regras especiais para "Vendendo agora" e "Mais vendidos"
+  // Regras especiais
   if (slug === "vendendo-agora") {
     b.onclick = () => {
       mode = "now";
@@ -93,27 +130,30 @@ function mkCatButton(name, slug) {
 }
 
 function render() {
-  const q = (document.getElementById("search").value || "").toLowerCase().trim();
+  const q = (document.getElementById("search")?.value || "")
+    .toLowerCase()
+    .trim();
+
   const grid = document.getElementById("grid");
+  if (!grid) return;
+
   grid.innerHTML = "";
 
-  // Base: filtro por categoria (quando mode=all) + busca
   let items = ALL.filter((p) => {
     const okCat = mode !== "all" ? true : (!activeCat || p.categorySlug === activeCat);
     const okQ = !q || (p.title || "").toLowerCase().includes(q);
     return okCat && okQ;
   });
 
-  // Modos inteligentes (Opção A)
+  // Modos inteligentes
   if (mode === "now") {
-    // “Vendendo agora” = os mais recentes no arquivo
     items = items.slice(0, 40);
   } else if (mode === "best") {
-    // “Mais vendidos” = top por preço (simples e sempre mostra algo)
-    items = [...items].sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0)).slice(0, 40);
+    items = [...items]
+      .sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0))
+      .slice(0, 40);
   }
 
-  // Render
   items.forEach((p) => {
     const card = document.createElement("article");
     card.className = "card";
@@ -139,36 +179,48 @@ function render() {
 
 function openModal(p) {
   const modal = document.getElementById("modal");
-  document.getElementById("m_img").src = p.imageUrl || "";
-  document.getElementById("m_title").textContent = p.title || "Produto";
-  document.getElementById("m_price").textContent = fmtBRL(p.promoPrice ?? p.price);
-  document.getElementById("m_buy").href = p.productUrl || "#";
-  document.getElementById("m_cat").textContent = p.categoryName || "";
+  if (!modal) return;
 
-  // TikTok search sempre com nome do produto
+  const img = document.getElementById("m_img");
+  const title = document.getElementById("m_title");
+  const price = document.getElementById("m_price");
+  const buy = document.getElementById("m_buy");
+  const cat = document.getElementById("m_cat");
+  const tiktok = document.getElementById("m_tiktok");
+
+  if (img) img.src = p.imageUrl || "";
+  if (title) title.textContent = p.title || "Produto";
+  if (price) price.textContent = fmtBRL(p.promoPrice ?? p.price);
+  if (buy) buy.href = p.productUrl || "#";
+  if (cat) cat.textContent = p.categoryName || "";
+
   const query = p.title || "produto shopee";
-  document.getElementById("m_tiktok").href =
-    `https://www.tiktok.com/search?q=${encodeURIComponent(query)}`;
+  if (tiktok) {
+    tiktok.href = `https://www.tiktok.com/search?q=${encodeURIComponent(query)}`;
+  }
 
   modal.showModal();
 }
 
 // Busca em tempo real
-document.getElementById("search").addEventListener("input", render);
+document.getElementById("search")?.addEventListener("input", render);
 
 // Fechar modal
-document.getElementById("close").onclick = () => document.getElementById("modal").close();
-document.getElementById("modal").addEventListener("click", (e) => {
-  if (e.target.id === "modal") document.getElementById("modal").close();
+document.getElementById("close")?.addEventListener("click", () => {
+  document.getElementById("modal")?.close();
+});
+document.getElementById("modal")?.addEventListener("click", (e) => {
+  if (e.target?.id === "modal") document.getElementById("modal")?.close();
 });
 
-// Botões do hero (se existirem no seu HTML)
+// Botões do hero
 const btnTop = document.getElementById("btnTop");
 if (btnTop) {
   btnTop.onclick = () => {
     mode = "all";
     activeCat = null;
-    document.getElementById("search").value = "";
+    const s = document.getElementById("search");
+    if (s) s.value = "";
     renderCats();
     render();
   };
@@ -179,31 +231,15 @@ if (btnMini) {
   btnMini.onclick = () => {
     mode = "all";
     activeCat = "miniaturas";
-    document.getElementById("search").value = "";
+    const s = document.getElementById("search");
+    if (s) s.value = "";
     renderCats();
     render();
   };
 }
 
-function escapeHtml(s) {
-  return (s || "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;");
-}
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-import { getAuth, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-
-const appFb = initializeApp(window.FIREBASE_CONFIG);
-const authFb = getAuth(appFb);
-
-const logoutBtn = document.getElementById("logoutBtn");
-if (logoutBtn) {
-  logoutBtn.onclick = async () => {
-    await signOut(authFb);
-    window.location.replace("login.html");
-  };
-}
-
-load();
+load().catch((e) => {
+  console.error(e);
+  const status = document.getElementById("updateStatus");
+  if (status) status.textContent = "❌ Erro ao carregar dados";
+});
