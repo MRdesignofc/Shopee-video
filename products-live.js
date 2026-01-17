@@ -1,67 +1,60 @@
+// products-live.js
 const PRODUCTS_URL = "./products.json";
-const POLL_MS = 60 * 60 * 1000; // 1 hora (você pode baixar pra 10 min)
-const CACHE_KEY = "shoptrends:products_cache_v1";
-const MAX_PRODUCTS = 500;
+const POLL_MS = 60 * 60 * 1000; // 1 hora
+const CACHE_KEY = "shoptrends:cache_items_v1";
+const MAX = 800;
+
+const keyOf = (p) => `${p.source}:${p.sourceId}`;
 
 function loadCache() {
-  try { return JSON.parse(localStorage.getItem(CACHE_KEY) || "[]"); }
-  catch { return []; }
+  try {
+    return JSON.parse(localStorage.getItem(CACHE_KEY) || "[]");
+  } catch {
+    return [];
+  }
 }
 
 function saveCache(list) {
-  localStorage.setItem(CACHE_KEY, JSON.stringify(list.slice(0, MAX_PRODUCTS)));
+  localStorage.setItem(CACHE_KEY, JSON.stringify(list.slice(0, MAX)));
 }
 
-function uniqMergeById(oldList, newList) {
-  const map = new Map();
-  // mantém os antigos
-  for (const p of oldList) map.set(String(p.id), p);
-  // sobrescreve/insere novos (prioriza dados novos)
-  for (const p of newList) map.set(String(p.id), p);
-  // retorna ordenado: mais recentes primeiro (updated_at)
-  return Array.from(map.values()).sort((a,b) => {
-    const da = Date.parse(a.updated_at || 0) || 0;
-    const db = Date.parse(b.updated_at || 0) || 0;
-    return db - da;
-  });
-}
+async function refresh() {
+  const cached = loadCache();
+  const cachedKeys = new Set(cached.map(keyOf));
 
-async function fetchProductsNoCache() {
   const res = await fetch(PRODUCTS_URL, { cache: "no-store" });
-  if (!res.ok) throw new Error("Falha ao carregar products.json");
   const data = await res.json();
-  return Array.isArray(data) ? data : (data.products || []);
-}
+  const items = Array.isArray(data.items) ? data.items : [];
 
-async function refreshProducts() {
-  const oldList = loadCache();
-  const newList = await fetchProductsNoCache();
+  const newOnes = items.filter(p => !cachedKeys.has(keyOf(p)));
 
-  // Conte quantos são realmente novos por ID
-  const oldIds = new Set(oldList.map(p => String(p.id)));
-  const trulyNew = newList.filter(p => !oldIds.has(String(p.id)));
+  const map = new Map(cached.map(p => [keyOf(p), p]));
+  for (const p of items) map.set(keyOf(p), p);
 
-  const merged = uniqMergeById(oldList, newList);
+  const merged = Array.from(map.values()).sort(
+    (a, b) =>
+      (Date.parse(b.addedAt || 0) || 0) -
+      (Date.parse(a.addedAt || 0) || 0)
+  );
+
   saveCache(merged);
 
-  // Aqui você chama seu render atual
-  // Ex: renderProducts(merged)
+  // ⚠️ IMPORTANTE:
+  // Essa função precisa existir no seu site
+  // É ela que desenha os cards
   if (typeof window.renderProducts === "function") {
     window.renderProducts(merged);
   }
 
-  // se você tiver um elemento status:
-  const status = document.getElementById("updateStatus");
-  if (status) {
-    status.textContent = trulyNew.length
-      ? `✅ ${trulyNew.length} produtos novos adicionados`
-      : `✅ Produtos atualizados (sem novos)`;
+  const el = document.getElementById("updateStatus");
+  if (el) {
+    el.textContent = newOnes.length
+      ? `✅ ${newOnes.length} novos produtos adicionados`
+      : `✅ Produtos atualizados`;
   }
 }
 
-function startHourlyUpdates() {
-  refreshProducts().catch(console.error);
-  setInterval(() => refreshProducts().catch(console.error), POLL_MS);
-}
-
-document.addEventListener("DOMContentLoaded", startHourlyUpdates);
+document.addEventListener("DOMContentLoaded", () => {
+  refresh().catch(console.error);
+  setInterval(() => refresh().catch(console.error), POLL_MS);
+});
