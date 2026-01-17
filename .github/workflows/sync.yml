@@ -1,33 +1,28 @@
-name: Update products.json hourly
+name: Update products hourly
 
 on:
   schedule:
-    - cron: "0 * * * *"   # a cada hora (UTC)
+    - cron: "0 * * * *"
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  build:
+  update:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Install deps
+      - name: Install
         run: npm ci
 
-      - name: Run updater
+      - name: Update products
         run: node scripts/update-products.js
-        env:
-          # se você usa chaves/API, coloque em Secrets do repo:
-          SHOPEE_API_KEY: ${{ secrets.SHOPEE_API_KEY }}
 
       - name: Commit & push if changed
         run: |
