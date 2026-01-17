@@ -1,12 +1,13 @@
 /**
  * Shopee Affiliate BR (GraphQL) -> products.json
  *
- * Env required:
+ * Required env:
  *  - SHOPEE_APP_ID
  *  - SHOPEE_SECRET
  *
  * Optional env:
- *  - PAGES_PER_CATEGORY (default 3)
+ *  - SHOPEE_API_URL (default: https://open-api.affiliate.shopee.com.br/graphql)
+ *  - PAGES_PER_KEYWORD (default 2)  // páginas por keyword
  *  - LIMIT_PER_PAGE (default 50)
  *  - SORT_TYPE (default 5)
  *
@@ -18,16 +19,18 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 
-const ENDPOINT = "https://open-api.affiliate.shopee.com.br/graphql";
 const OUT_FILE = path.join(process.cwd(), "products.json");
 const CATS_FILE = path.join(process.cwd(), "data", "categories.json");
 
 const APP_ID = process.env.SHOPEE_APP_ID;
 const SECRET = process.env.SHOPEE_SECRET;
 
-const PAGES_PER_CATEGORY = Number(process.env.PAGES_PER_CATEGORY || 3);
+const ENDPOINT = process.env.SHOPEE_API_URL || "https://open-api.affiliate.shopee.com.br/graphql";
+const PAGES_PER_KEYWORD = Number(process.env.PAGES_PER_KEYWORD || 2);
 const LIMIT_PER_PAGE = Number(process.env.LIMIT_PER_PAGE || 50);
 const SORT_TYPE = Number(process.env.SORT_TYPE || 5);
+
+const MAX_ITEMS = 12000;
 
 if (!APP_ID || !SECRET) {
   console.error("❌ Defina SHOPEE_APP_ID e SHOPEE_SECRET nos Secrets do GitHub Actions.");
@@ -51,7 +54,6 @@ function sha256Hex(str) {
 function buildAuthHeader(payloadStr) {
   const ts = Math.floor(Date.now() / 1000).toString();
   const signature = sha256Hex(`${APP_ID}${ts}${payloadStr}${SECRET}`);
-  // Formato descrito na doc (Affiliate BR)
   return `SHA256 Credential=${APP_ID}, Timestamp=${ts}, Signature=${signature}`;
 }
 
@@ -74,9 +76,7 @@ function buildTikTokUrl(title, categoryName) {
 }
 
 /**
- * ⚠️ GraphQL schema pode variar um pouco por programa/região.
- * Esses campos abaixo são os mais comuns em "productOfferV2".
- * Se a API reclamar de campo inexistente, ajuste a seleção usando o Playground.
+ * Query comum: ajuste os campos se sua conta retornar schema diferente.
  */
 const QUERY_PRODUCT_OFFER_V2 = `
 query ProductOfferV2($listType:Int, $keyword:String, $sortType:Int, $page:Int, $limit:Int) {
@@ -87,7 +87,6 @@ query ProductOfferV2($listType:Int, $keyword:String, $sortType:Int, $page:Int, $
       offerLink
       imageUrl
       price
-      commissionRate
     }
   }
 }
@@ -98,13 +97,11 @@ function normalizeOfferNode(node, cat) {
   const imageUrl = (node.imageUrl || "").toString().trim();
   const productUrl = (node.offerLink || node.productLink || "").toString().trim();
 
-  // tenta extrair um id do link; se não der, usa hash do link
+  // tenta extrair id do link; fallback: hash do link
   let sourceId = "";
   const m = productUrl.match(/product\/(\d+)\/(\d+)/i);
   if (m && m[2]) sourceId = m[2];
-  if (!sourceId) {
-    sourceId = sha256Hex(productUrl || title).slice(0, 16);
-  }
+  if (!sourceId) sourceId = sha256Hex(productUrl || title).slice(0, 16);
 
   const price = typeof node.price === "number" ? node.price : Number(node.price) || 0;
 
@@ -114,7 +111,7 @@ function normalizeOfferNode(node, cat) {
     title,
     imageUrl,
     price,
-    promoPrice: null, // se sua query trouxer promoPrice, dá pra preencher aqui
+    promoPrice: null,
     productUrl,
     categorySlug: cat.slug,
     categoryName: cat.name,
@@ -177,18 +174,55 @@ function loadCategories() {
   return fallback;
 }
 
-function buildKeywordForCategory(cat) {
-  // seeds leves só pra guiar resultados por categoria (ajuste como quiser)
+function keywordsForCategory(cat) {
   const map = {
-    "eletronicos": "fone bluetooth",
-    "beleza": "perfume",
-    "moda-feminina": "vestido",
-    "moda-masculina": "camisa masculina",
-    "casa": "organizador",
-    "infantis": "brinquedo",
-    "miniaturas": "hot wheels",
+    eletronicos: [
+      "fone bluetooth",
+      "smartwatch",
+      "carregador usb c",
+    ],
+    beleza: [
+      "perfume importado",
+      "skincare",
+      "maquiagem",
+    ],
+    "moda-feminina": [
+      "vestido feminino",
+      "conjunto feminino",
+      "blusa feminina",
+    ],
+    "moda-masculina": [
+      "camisa masculina",
+      "conjunto masculino",
+      "bermuda masculina",
+    ],
+    casa: [
+      "organizador casa",
+      "cozinha organizador",
+      "decoracao casa",
+    ],
+    infantis: [
+      "brinquedo infantil",
+      "roupa infantil",
+      "kit bebe",
+    ],
+
+    // ✅ miniaturas com foco premium/diecast (mais parecido com o seu vídeo)
+    miniaturas: [
+      "mini gt 1:64 diecast",
+      "tarmac works 1:64 diecast",
+      "inno64 1:64 diecast",
+      "tomica premium 1:64",
+      "maisto diecast 1:32",
+      "hot wheels premium 1:64",
+      "g63 g class 1:64 miniatura",
+      "suv 4x4 diecast 1:64",
+      "jeep wrangler 1:64 diecast",
+      "land rover defender 1:64 diecast",
+    ],
   };
-  return map[cat.slug] || "";
+
+  return map[cat.slug] || [""];
 }
 
 function mergeProducts(oldItems, newItems) {
@@ -215,43 +249,49 @@ function mergeProducts(oldItems, newItems) {
       map.set(k, {
         ...prev,
         ...p,
-        // preserva data de entrada se já existia
         addedAt: prev.addedAt || p.addedAt || new Date().toISOString(),
       });
       updated++;
     }
   }
 
-  // ordena por addedAt desc
   const merged = Array.from(map.values()).sort((a, b) => {
     const da = Date.parse(a.addedAt || 0) || 0;
     const db = Date.parse(b.addedAt || 0) || 0;
     return db - da;
   });
 
-  return { items: merged.slice(0, 8000), added, updated, total: merged.length };
+  return { items: merged.slice(0, MAX_ITEMS), added, updated, total: merged.length };
 }
 
 async function collectOffersForCategory(cat) {
-  const keyword = buildKeywordForCategory(cat);
+  const keywords = keywordsForCategory(cat);
   const out = [];
 
-  for (let page = 1; page <= PAGES_PER_CATEGORY; page++) {
-    const bodyObj = {
-      query: QUERY_PRODUCT_OFFER_V2,
-      operationName: "ProductOfferV2",
-      variables: {
-        listType: 0,
-        keyword: keyword || null,
-        sortType: SORT_TYPE,
-        page,
-        limit: LIMIT_PER_PAGE,
-      },
-    };
+  for (const keyword of keywords) {
+    for (let page = 1; page <= PAGES_PER_KEYWORD; page++) {
+      const bodyObj = {
+        query: QUERY_PRODUCT_OFFER_V2,
+        operationName: "ProductOfferV2",
+        variables: {
+          listType: 0,
+          keyword: keyword || null,
+          sortType: SORT_TYPE,
+          page,
+          limit: LIMIT_PER_PAGE,
+        },
+      };
 
-    const data = await gqlRequest(bodyObj);
-    const nodes = data?.productOfferV2?.nodes || [];
-    for (const n of nodes) out.push(normalizeOfferNode(n, cat));
+      const data = await gqlRequest(bodyObj);
+      const nodes = data?.productOfferV2?.nodes || [];
+
+      for (const n of nodes) {
+        const item = normalizeOfferNode(n, cat);
+        // garante tiktok url sempre
+        if (!item.tiktokUrl) item.tiktokUrl = buildTikTokUrl(item.title, cat.name);
+        out.push(item);
+      }
+    }
   }
 
   return out;
@@ -264,6 +304,7 @@ async function main() {
 
   const categories = loadCategories();
   console.log(`📚 Categorias: ${categories.length}`);
+  console.log(`🌐 Endpoint: ${ENDPOINT}`);
 
   const allNew = [];
   for (const cat of categories) {
