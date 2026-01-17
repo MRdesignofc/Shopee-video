@@ -4,9 +4,10 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Entrar • Shop Trends</title>
-  <link rel="stylesheet" href="style.css"/>
 
   <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="apple-touch-icon" href="favicon.png">
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
   <header class="header">
@@ -32,7 +33,20 @@
           <button class="btn btn-ghost" id="tabRegister" type="button">Criar conta</button>
         </div>
 
-        <form id="form" style="margin-top:14px; display:flex; flex-direction:column; gap:10px;">
+        <!-- Google button (aparece sempre) -->
+        <div style="margin-top:14px;">
+          <button class="btn btn-ghost" id="googleBtn" type="button" style="width:100%;">
+            Entrar com Google
+          </button>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:10px; margin: 14px 0;">
+          <div style="height:1px; background:#eef2f7; flex:1;"></div>
+          <div class="small">ou</div>
+          <div style="height:1px; background:#eef2f7; flex:1;"></div>
+        </div>
+
+        <form id="form" style="display:flex; flex-direction:column; gap:10px;">
           <div class="search" style="border-radius: 16px;">
             <input id="email" type="email" placeholder="Seu e-mail" required />
           </div>
@@ -48,7 +62,7 @@
     </div>
   </main>
 
-  <!-- Config do Firebase (você vai criar esse arquivo) -->
+  <!-- Config do Firebase -->
   <script src="firebase-config.js"></script>
 
   <!-- Auth -->
