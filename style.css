@@ -836,5 +836,23 @@ body{
 .grid2.is-compact .card h3{ display:none; }
 .grid2.is-compact .card .tag{ display:none; }
 .grid2.is-compact .card img{ height: 160px; }
+
 /* Garantia: na seção "Ver tudo" não mostrar tags de categoria */
 #gridAll .tag { display: none !important; }
+
+.loadmore-wrap{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  padding: 16px 0 28px;
+}
+
+.loadmore{
+  min-width: 180px;
+}
+
+.loadmore-info{
+  font-size: 12px;
+  color: var(--muted);
+}
