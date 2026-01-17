@@ -1,21 +1,38 @@
 /**
- * Update products.json using Shopee credentials stored as GitHub Secrets.
+ * Shopee Affiliate BR (GraphQL) -> products.json
  *
- * Required env:
- * - SHOPEE_APP_ID
- * - SHOPEE_SECRET
- * - SHOPEE_API_URL   (endpoint base/rota completa que retorna itens)
+ * Env required:
+ *  - SHOPEE_APP_ID
+ *  - SHOPEE_SECRET
+ *
+ * Optional env:
+ *  - PAGES_PER_CATEGORY (default 3)
+ *  - LIMIT_PER_PAGE (default 50)
+ *  - SORT_TYPE (default 5)
  *
  * Output:
- * - /products.json   { updatedAt, items: [...] }
+ *  - /products.json  { updatedAt: "YYYY-MM-DD HH:mm UTC", items: [...] }
  */
 
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 
+const ENDPOINT = "https://open-api.affiliate.shopee.com.br/graphql";
 const OUT_FILE = path.join(process.cwd(), "products.json");
-const MAX_ITEMS = 5000;
+const CATS_FILE = path.join(process.cwd(), "data", "categories.json");
+
+const APP_ID = process.env.SHOPEE_APP_ID;
+const SECRET = process.env.SHOPEE_SECRET;
+
+const PAGES_PER_CATEGORY = Number(process.env.PAGES_PER_CATEGORY || 3);
+const LIMIT_PER_PAGE = Number(process.env.LIMIT_PER_PAGE || 50);
+const SORT_TYPE = Number(process.env.SORT_TYPE || 5);
+
+if (!APP_ID || !SECRET) {
+  console.error("❌ Defina SHOPEE_APP_ID e SHOPEE_SECRET nos Secrets do GitHub Actions.");
+  process.exit(1);
+}
 
 function nowUTCString() {
   const d = new Date();
@@ -27,10 +44,21 @@ function nowUTCString() {
   return `${yyyy}-${mm}-${dd} ${hh}:${mi} UTC`;
 }
 
-function readJSONIfExists(filePath, fallback) {
-  if (!fs.existsSync(filePath)) return fallback;
+function sha256Hex(str) {
+  return crypto.createHash("sha256").update(str, "utf8").digest("hex");
+}
+
+function buildAuthHeader(payloadStr) {
+  const ts = Math.floor(Date.now() / 1000).toString();
+  const signature = sha256Hex(`${APP_ID}${ts}${payloadStr}${SECRET}`);
+  // Formato descrito na doc (Affiliate BR)
+  return `SHA256 Credential=${APP_ID}, Timestamp=${ts}, Signature=${signature}`;
+}
+
+function readJsonIfExists(fp, fallback) {
+  if (!fs.existsSync(fp)) return fallback;
   try {
-    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+    return JSON.parse(fs.readFileSync(fp, "utf8"));
   } catch {
     return fallback;
   }
@@ -45,169 +73,216 @@ function buildTikTokUrl(title, categoryName) {
   return `https://www.tiktok.com/search?q=${encodeURIComponent(base.trim())}`;
 }
 
-function normalizeItem(p) {
-  const source = p.source || "shopee_affiliate";
-  const sourceId = String(p.sourceId ?? p.itemid ?? p.product_id ?? p.id ?? "");
-  if (!sourceId) return null;
+/**
+ * ⚠️ GraphQL schema pode variar um pouco por programa/região.
+ * Esses campos abaixo são os mais comuns em "productOfferV2".
+ * Se a API reclamar de campo inexistente, ajuste a seleção usando o Playground.
+ */
+const QUERY_PRODUCT_OFFER_V2 = `
+query ProductOfferV2($listType:Int, $keyword:String, $sortType:Int, $page:Int, $limit:Int) {
+  productOfferV2(listType:$listType, keyword:$keyword, sortType:$sortType, page:$page, limit:$limit) {
+    nodes {
+      productName
+      productLink
+      offerLink
+      imageUrl
+      price
+      commissionRate
+    }
+  }
+}
+`;
 
-  const title = String(p.title ?? p.name ?? "").trim();
-  if (!title) return null;
+function normalizeOfferNode(node, cat) {
+  const title = (node.productName || "").toString().trim();
+  const imageUrl = (node.imageUrl || "").toString().trim();
+  const productUrl = (node.offerLink || node.productLink || "").toString().trim();
+
+  // tenta extrair um id do link; se não der, usa hash do link
+  let sourceId = "";
+  const m = productUrl.match(/product\/(\d+)\/(\d+)/i);
+  if (m && m[2]) sourceId = m[2];
+  if (!sourceId) {
+    sourceId = sha256Hex(productUrl || title).slice(0, 16);
+  }
+
+  const price = typeof node.price === "number" ? node.price : Number(node.price) || 0;
 
   return {
-    source,
+    source: "shopee_affiliate",
     sourceId,
     title,
-    imageUrl: p.imageUrl ?? p.image_url ?? p.thumb ?? "",
-    price: typeof p.price === "number" ? p.price : Number(p.price) || 0,
-    promoPrice:
-      p.promoPrice == null
-        ? null
-        : (typeof p.promoPrice === "number" ? p.promoPrice : Number(p.promoPrice) || null),
-    productUrl: p.productUrl ?? p.url ?? p.link ?? "",
-    categorySlug: p.categorySlug ?? p.category_slug ?? "geral",
-    categoryName: p.categoryName ?? p.category_name ?? "Geral",
-    tiktokUrl: p.tiktokUrl ?? null,
-    addedAt: p.addedAt ?? null,
+    imageUrl,
+    price,
+    promoPrice: null, // se sua query trouxer promoPrice, dá pra preencher aqui
+    productUrl,
+    categorySlug: cat.slug,
+    categoryName: cat.name,
+    tiktokUrl: buildTikTokUrl(title, cat.name),
+    addedAt: new Date().toISOString(),
   };
 }
 
-/**
- * NOTE:
- * I don't assume Shopee's exact signature scheme because it varies by program.
- * This helper gives you a standard HMAC signature pattern you can adapt if needed.
- *
- * Many affiliate APIs do something like:
- *   sign = HMAC_SHA256(secret, appId + timestamp + path + body)
- *
- * If your existing implementation differs, you can adjust the payload composition here.
- */
-function hmacSha256Hex(secret, payload) {
-  return crypto.createHmac("sha256", secret).update(payload).digest("hex");
-}
+async function gqlRequest(bodyObj) {
+  const payloadStr = JSON.stringify(bodyObj);
 
-async function callShopeeApi({ apiUrl, appId, secret, payload }) {
-  const timestamp = Math.floor(Date.now() / 1000).toString();
-
-  // Common-ish signing approach (adjust if your API docs differ)
-  const body = JSON.stringify(payload || {});
-  const signPayload = `${appId}${timestamp}${apiUrl}${body}`;
-  const signature = hmacSha256Hex(secret, signPayload);
-
-  const res = await fetch(apiUrl, {
+  const res = await fetch(ENDPOINT, {
     method: "POST",
     headers: {
       "content-type": "application/json",
       "accept": "application/json",
-      "x-app-id": appId,
-      "x-timestamp": timestamp,
-      "x-signature": signature,
+      "Authorization": buildAuthHeader(payloadStr),
     },
-    body,
+    body: payloadStr,
   });
 
   const text = await res.text().catch(() => "");
   if (!res.ok) {
-    throw new Error(`Shopee API HTTP ${res.status} ${res.statusText} :: ${text.slice(0, 300)}`);
+    throw new Error(`HTTP ${res.status} ${res.statusText} :: ${text.slice(0, 300)}`);
   }
 
-  // tenta parsear json
+  let json;
   try {
-    return JSON.parse(text);
+    json = JSON.parse(text);
   } catch {
-    throw new Error(`Resposta não-JSON da Shopee API: ${text.slice(0, 200)}`);
+    throw new Error(`Resposta não-JSON :: ${text.slice(0, 200)}`);
   }
+
+  if (json.errors?.length) {
+    throw new Error(`GraphQL errors :: ${JSON.stringify(json.errors).slice(0, 500)}`);
+  }
+
+  return json.data;
 }
 
-function merge(oldItems, newItems) {
+function loadCategories() {
+  const fallback = [
+    { slug: "eletronicos", name: "Eletrônicos & Acessórios" },
+    { slug: "beleza", name: "Beleza" },
+    { slug: "moda-feminina", name: "Moda Feminina" },
+    { slug: "moda-masculina", name: "Moda Masculina" },
+    { slug: "casa", name: "Casa & Decoração" },
+    { slug: "infantis", name: "Infantis" },
+    { slug: "miniaturas", name: "Miniaturas de carrinhos" },
+  ];
+
+  if (!fs.existsSync(CATS_FILE)) return fallback;
+
+  try {
+    const cats = JSON.parse(fs.readFileSync(CATS_FILE, "utf8"));
+    if (Array.isArray(cats) && cats.length) {
+      return cats.map((c) => ({ slug: c.slug, name: c.name })).filter((c) => c.slug && c.name);
+    }
+  } catch {}
+  return fallback;
+}
+
+function buildKeywordForCategory(cat) {
+  // seeds leves só pra guiar resultados por categoria (ajuste como quiser)
+  const map = {
+    "eletronicos": "fone bluetooth",
+    "beleza": "perfume",
+    "moda-feminina": "vestido",
+    "moda-masculina": "camisa masculina",
+    "casa": "organizador",
+    "infantis": "brinquedo",
+    "miniaturas": "hot wheels",
+  };
+  return map[cat.slug] || "";
+}
+
+function mergeProducts(oldItems, newItems) {
   const map = new Map();
 
-  for (const it of oldItems) {
-    const n = normalizeItem(it);
-    if (!n) continue;
-    map.set(keyOf(n), n);
+  for (const p of oldItems) {
+    if (!p) continue;
+    const k = keyOf(p);
+    if (!k.endsWith(":")) map.set(k, p);
   }
 
   let added = 0;
   let updated = 0;
 
-  for (const it of newItems) {
-    const n = normalizeItem(it);
-    if (!n) continue;
-
-    if (!n.tiktokUrl) n.tiktokUrl = buildTikTokUrl(n.title, n.categoryName);
-
-    const k = keyOf(n);
+  for (const p of newItems) {
+    if (!p) continue;
+    const k = keyOf(p);
     const prev = map.get(k);
 
     if (!prev) {
-      map.set(k, { ...n, addedAt: n.addedAt || new Date().toISOString() });
+      map.set(k, p);
       added++;
     } else {
       map.set(k, {
         ...prev,
-        ...n,
-        addedAt: prev.addedAt || n.addedAt || new Date().toISOString(),
+        ...p,
+        // preserva data de entrada se já existia
+        addedAt: prev.addedAt || p.addedAt || new Date().toISOString(),
       });
       updated++;
     }
   }
 
+  // ordena por addedAt desc
   const merged = Array.from(map.values()).sort((a, b) => {
     const da = Date.parse(a.addedAt || 0) || 0;
     const db = Date.parse(b.addedAt || 0) || 0;
     return db - da;
   });
 
-  return { items: merged.slice(0, MAX_ITEMS), added, updated, total: merged.length };
+  return { items: merged.slice(0, 8000), added, updated, total: merged.length };
+}
+
+async function collectOffersForCategory(cat) {
+  const keyword = buildKeywordForCategory(cat);
+  const out = [];
+
+  for (let page = 1; page <= PAGES_PER_CATEGORY; page++) {
+    const bodyObj = {
+      query: QUERY_PRODUCT_OFFER_V2,
+      operationName: "ProductOfferV2",
+      variables: {
+        listType: 0,
+        keyword: keyword || null,
+        sortType: SORT_TYPE,
+        page,
+        limit: LIMIT_PER_PAGE,
+      },
+    };
+
+    const data = await gqlRequest(bodyObj);
+    const nodes = data?.productOfferV2?.nodes || [];
+    for (const n of nodes) out.push(normalizeOfferNode(n, cat));
+  }
+
+  return out;
 }
 
 async function main() {
-  const appId = process.env.SHOPEE_APP_ID;
-  const secret = process.env.SHOPEE_SECRET;
-  const apiUrl = process.env.SHOPEE_API_URL;
-
-  if (!appId || !secret || !apiUrl) {
-    throw new Error(
-      "Faltam env vars. Você precisa definir SHOPEE_APP_ID, SHOPEE_SECRET e SHOPEE_API_URL nos Secrets do GitHub."
-    );
-  }
-
-  const current = readJSONIfExists(OUT_FILE, { updatedAt: null, items: [] });
+  console.log("🔄 Lendo catálogo atual…");
+  const current = readJsonIfExists(OUT_FILE, { updatedAt: null, items: [] });
   const oldItems = Array.isArray(current.items) ? current.items : [];
 
-  // 🔧 Payload genérico — ajuste conforme o endpoint que você usa.
-  // Se seu endpoint já retorna tudo sem payload, deixe {}.
-  const payload = {
-    // exemplo de filtros:
-    // country: "BR",
-    // page: 1,
-    // page_size: 200,
-  };
+  const categories = loadCategories();
+  console.log(`📚 Categorias: ${categories.length}`);
 
-  console.log("🌐 Chamando Shopee API…");
-  const data = await callShopeeApi({ apiUrl, appId, secret, payload });
-
-  // Aceita formatos comuns:
-  // 1) { items: [...] }
-  // 2) { data: { items: [...] } }
-  // 3) { list: [...] }
-  // 4) [...]
-  const incomingItems = Array.isArray(data)
-    ? data
-    : Array.isArray(data.items)
-      ? data.items
-      : Array.isArray(data?.data?.items)
-        ? data.data.items
-        : Array.isArray(data.list)
-          ? data.list
-          : [];
-
-  if (!incomingItems.length) {
-    console.log("⚠️ API retornou 0 itens. Não vou sobrescrever seu catálogo.");
-    return;
+  const allNew = [];
+  for (const cat of categories) {
+    console.log(`➡️ Coletando: ${cat.slug} (${cat.name})`);
+    try {
+      const items = await collectOffersForCategory(cat);
+      console.log(`   + ${items.length} itens`);
+      allNew.push(...items);
+    } catch (e) {
+      console.log(`   ⚠️ Falhou ${cat.slug}: ${e.message}`);
+    }
   }
 
-  const { items, added, updated, total } = merge(oldItems, incomingItems);
+  if (!allNew.length) {
+    console.log("❌ Nenhum item retornou. Verifique credenciais / assinatura / query.");
+    process.exit(1);
+  }
+
+  const { items, added, updated, total } = mergeProducts(oldItems, allNew);
 
   const out = {
     updatedAt: nowUTCString(),
@@ -221,6 +296,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("❌ Falha no update-products:", err);
+  console.error("❌ Erro:", err);
   process.exit(1);
 });
