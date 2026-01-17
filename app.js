@@ -1,4 +1,5 @@
 // app.js (ESM)
+
 const fmtBRL = (n) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(n) || 0);
 
@@ -40,7 +41,6 @@ function writeFavs(set){
 }
 
 function scoreMiniaturas(p){
-  // Prioriza Hot Wheels / 1:64 / diecast etc.
   const t = safeLower(p.title);
   const keys = [
     ["hot wheels", 40],
@@ -80,6 +80,7 @@ export function createShopTrendsApp({
 
   let page = 1;
   let favs = readFavs();
+  let onlyFav = false;
 
   const loadingPill = $("loadingPill");
   const meta = $("meta");
@@ -115,8 +116,6 @@ export function createShopTrendsApp({
   const toggleViewBtn = $("toggleView");
   const onlyFavBtn = $("onlyFav");
 
-  let onlyFav = false;
-
   function setLoading(on){
     if (!loadingPill) return;
     loadingPill.hidden = !on;
@@ -144,6 +143,9 @@ export function createShopTrendsApp({
     }catch{
       CATS = [];
     }
+
+    // Se vierem "vendendo-agora/mais-vendidos" como categoria, removemos da lista de categorias reais
+    CATS = (CATS || []).filter(c => c && c.slug && c.name && c.slug !== "vendendo-agora" && c.slug !== "mais-vendidos");
 
     if (!CATS.length){
       const uniqCats = uniqBy(
@@ -185,8 +187,8 @@ export function createShopTrendsApp({
 
     const quick = [
       { slug: "eletronicos", name: "Eletrônicos", icon: "🎧" },
-      { slug: "moda", name: "Moda", icon: "👕" },
-      { slug: "casa-decoracao", name: "Casa & Decoração", icon: "🏠" },
+      { slug: "moda-feminina", name: "Moda", icon: "👕" },
+      { slug: "casa", name: "Casa & Decoração", icon: "🏠" },
       { slug: "beleza", name: "Beleza", icon: "💄" },
     ];
 
@@ -199,7 +201,6 @@ export function createShopTrendsApp({
         <div class="heroCat__label">${escapeHtml(q.name)}</div>
       `;
       btn.onclick = () => {
-        // tenta achar slug real mais próximo
         const found = CATS.find(c => c.slug === q.slug) || CATS.find(c => safeLower(c.name).includes(safeLower(q.name)));
         if (found) setView(`cat:${found.slug}`);
         else setView("all");
@@ -215,13 +216,15 @@ export function createShopTrendsApp({
       { key: "all", label: "Todos" },
       { key: "now", label: "Vendendo agora" },
       { key: "best", label: "Mais vendidos" },
-      // depois: categorias reais do site
+      { key: "deals", label: "Ofertas" },
       ...CATS.map(c => ({ key: `cat:${c.slug}`, label: c.name })),
     ];
 
     for (const it of items){
       const b = document.createElement("button");
       b.className = "chip";
+      b.type = "button";
+      b.dataset.key = it.key;
       b.textContent = it.label;
       b.onclick = () => setView(it.key);
       elCats.appendChild(b);
@@ -232,26 +235,18 @@ export function createShopTrendsApp({
 
   function paintActiveChip(){
     const buttons = elCats.querySelectorAll(".chip");
-    buttons.forEach(btn => {
-      const k = btn.textContent;
-      // ativa por comparação simples (ok visual)
-      btn.classList.remove("active");
-    });
+    buttons.forEach(btn => btn.classList.remove("active"));
 
-    // marca o ativo de forma consistente
-    const map = new Map();
-    [...elCats.querySelectorAll(".chip")].forEach((b) => map.set(b.textContent, b));
+    const activeKey =
+      view === "all" ? "all" :
+      view === "now" ? "now" :
+      view === "best" ? "best" :
+      view === "deals" ? "deals" :
+      view.startsWith("cat:") ? view :
+      "all";
 
-    const activeLabel =
-      view === "all" ? "Todos" :
-      view === "now" ? "Vendendo agora" :
-      view === "best" ? "Mais vendidos" :
-      view === "deals" ? "Ofertas" :
-      view.startsWith("cat:") ? (CATS.find(c => `cat:${c.slug}` === view)?.name || "Todos") :
-      "Todos";
-
-    const btn = map.get(activeLabel);
-    if (btn) btn.classList.add("active");
+    const activeBtn = elCats.querySelector(`.chip[data-key="${CSS.escape(activeKey)}"]`);
+    if (activeBtn) activeBtn.classList.add("active");
   }
 
   function setView(v){
@@ -268,27 +263,22 @@ export function createShopTrendsApp({
 
   function baseFiltered(){
     const q = currentQuery();
-
     let items = ALL;
 
-    // favoritos
     if (onlyFav){
       items = items.filter(p => favs.has(p.sourceId || p.productUrl || p.title));
     }
 
-    // categoria select (dropdown)
     const catSel = selCat.value;
     if (catSel && catSel !== "all"){
       items = items.filter(p => p.categorySlug === catSel);
     }
 
-    // view por chip
     if (view.startsWith("cat:")){
       const slug = view.split(":")[1];
       items = items.filter(p => p.categorySlug === slug);
     }
 
-    // busca
     if (q){
       items = items.filter(p => safeLower(p.title).includes(q));
     }
@@ -297,9 +287,7 @@ export function createShopTrendsApp({
   }
 
   function getDeals(items){
-    // Ofertas: promoPrice existe e é menor que price
     const deals = items.filter(p => p.promoPrice != null && Number(p.promoPrice) < Number(p.price));
-    // fallback: se quase não tiver promo, pega preço baixo
     if (deals.length >= 24) return deals;
     const cheap = [...items].sort((a,b) => (Number(a.price)||0) - (Number(b.price)||0)).slice(0, 80);
     return uniqBy([...deals, ...cheap], (p) => p.sourceId || p.productUrl || p.title);
@@ -322,15 +310,12 @@ export function createShopTrendsApp({
       });
     }
     if (sort === "newest"){
-      // “vendendo agora” = assume arquivo ordenado mais recente primeiro
       return [...items];
     }
     if (sort === "bestsellers"){
-      // sem métrica real => aproxima por “mais caros primeiro” (visualmente ok) + estabilidade
       return [...items].sort((a,b) => (Number(b.price)||0) - (Number(a.price)||0));
     }
 
-    // relevance default: miniaturas prioriza keywords
     if ((view === "all" && selCat.value === "miniaturas") || view === "cat:miniaturas"){
       return [...items].sort((a,b) => scoreMiniaturas(b) - scoreMiniaturas(a));
     }
@@ -339,8 +324,6 @@ export function createShopTrendsApp({
   }
 
   function ensureViewVisibility(){
-    // HOME aparece só quando view=home
-    // LIST aparece quando view != home
     const isHome = (view === "home");
     homeView.hidden = !isHome;
     listView.hidden = isHome;
@@ -349,21 +332,15 @@ export function createShopTrendsApp({
   function render(){
     setMeta();
     ensureViewVisibility();
-
-    // Compact toggle
     applyCompact();
 
-    // HOME vitrines sempre carregam do conjunto filtrado por dropdown/busca/favs
-    // (sem quebrar UI)
     const base = sortItems(baseFiltered());
 
-    // se usuário escolheu um view específico diferente de home:
     if (view !== "home"){
       renderList(base);
       return;
     }
 
-    // vitrines
     const now = base.slice(0, 16);
     const best = [...base].sort((a,b) => (Number(b.price)||0) - (Number(a.price)||0)).slice(0, 16);
     const deals = getDeals(base).slice(0, 16);
@@ -378,7 +355,6 @@ export function createShopTrendsApp({
   }
 
   function renderList(base){
-    // define título
     let title = "Todos os produtos";
     if (view === "all") title = "Todos os produtos";
     if (view === "now") title = "Vendendo agora";
@@ -393,22 +369,17 @@ export function createShopTrendsApp({
     let items = base;
 
     if (view === "now"){
-      items = base.slice(0, 500); // não limita “pra sempre”, mas mantém navegação ok
+      items = base.slice(0, 500);
     } else if (view === "best"){
       items = [...base].sort((a,b) => (Number(b.price)||0) - (Number(a.price)||0));
     } else if (view === "deals"){
       items = getDeals(base);
-    } else if (view === "all"){
-      // já ok
     } else if (view.startsWith("cat:")){
-      // já filtrado
-      // miniaturas => prioriza Hot Wheels
       if (view === "cat:miniaturas"){
         items = [...items].sort((a,b) => scoreMiniaturas(b) - scoreMiniaturas(a));
       }
     }
 
-    // paginação load more
     const total = items.length;
     const shown = Math.min(total, page * perPage);
     const slice = items.slice(0, shown);
@@ -416,15 +387,11 @@ export function createShopTrendsApp({
     listSub.textContent = `${shown} de ${total} itens`;
     renderGrid(gridAll, slice);
 
-    // load more button
     const hasMore = shown < total;
     loadMoreBtn.disabled = !hasMore;
     loadMoreBtn.style.opacity = hasMore ? "1" : ".6";
     loadMoreBtn.textContent = hasMore ? "Carregar mais" : "Tudo carregado";
     loadMoreHint.textContent = hasMore ? `Mostrando ${shown} de ${total}` : `Total: ${total}`;
-
-    // garante que não apareça “categorias no meio”:
-    // (nada de headings dentro do grid; aqui grid só recebe cards)
   }
 
   function renderGrid(gridEl, items){
@@ -471,17 +438,15 @@ export function createShopTrendsApp({
         </div>
       `;
 
-      // abrir modal ao clicar no card ou “Ver”
       card.querySelector(".card__cta").onclick = (e) => { e.stopPropagation(); openModal(p); };
       card.onclick = () => openModal(p);
 
-      // favorito
       card.querySelector(".favBtn").onclick = (e) => {
         e.stopPropagation();
         if (favs.has(id)) favs.delete(id);
         else favs.add(id);
         writeFavs(favs);
-        render(); // re-render pra atualizar cor/estado
+        render();
       };
 
       gridEl.appendChild(card);
@@ -502,15 +467,12 @@ export function createShopTrendsApp({
   }
 
   function bind(){
-    // close modal
     $("close").onclick = () => $("modal").close();
     $("modal").addEventListener("click", (e) => {
       if (e.target.id === "modal") $("modal").close();
     });
 
-    // search button
     btnSearch.onclick = () => {
-      // se estava na home, manda pro “Todos”
       if (view === "home") setView("all");
       else render();
     };
@@ -521,45 +483,16 @@ export function createShopTrendsApp({
       }
     });
 
-    // deals
     btnDeals.onclick = () => setView("deals");
 
-    // dropdowns
-    selCat.addEventListener("change", () => {
-      // ao trocar categoria, se estiver home mantém vitrines, se não lista atualiza
-      render();
-    });
-
+    selCat.addEventListener("change", () => render());
     selSort.addEventListener("change", () => render());
 
-    // chips especiais
-    // clique nos chips do topo (renderChips já liga)
-    // mas faltam “now/best” no view:
-    // eles já existem como labels, então tratamos pelo texto:
-    elCats.addEventListener("click", (e) => {
-      const t = e.target;
-      if (!(t instanceof HTMLElement)) return;
-      if (!t.classList.contains("chip")) return;
-
-      const label = t.textContent.trim();
-
-      if (label === "Todos") setView("all");
-      else if (label === "Vendendo agora") setView("now");
-      else if (label === "Mais vendidos") setView("best");
-      else {
-        // categoria por nome
-        const c = CATS.find(x => x.name === label);
-        if (c) setView(`cat:${c.slug}`);
-      }
-    });
-
-    // compact toggle
     toggleViewBtn.onclick = () => {
       compact = !compact;
       applyCompact();
     };
 
-    // only fav
     onlyFavBtn.onclick = () => {
       onlyFav = !onlyFav;
       onlyFavBtn.setAttribute("aria-pressed", onlyFav ? "true" : "false");
@@ -567,18 +500,16 @@ export function createShopTrendsApp({
       render();
     };
 
-    // load more
     loadMoreBtn.onclick = async () => {
       if (loadMoreBtn.disabled) return;
       setLoading(true);
       loadMoreBtn.textContent = "Carregando...";
-      await new Promise(r => setTimeout(r, 250)); // sensação de loading suave
+      await new Promise(r => setTimeout(r, 250));
       page += 1;
       setLoading(false);
       render();
     };
 
-    // botão carrinho/conta (placeholder)
     $("cartBtn").onclick = () => setView("deals");
     $("userBtn").onclick = () => setView("all");
   }
