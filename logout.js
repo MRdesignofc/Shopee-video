@@ -5,24 +5,16 @@ const btn = document.getElementById("logoutBtn");
 
 if (btn) {
   const config = window.FIREBASE_CONFIG;
+  const app = getApps().length ? getApps()[0] : initializeApp(config);
+  const auth = getAuth(app);
 
-  if (!config || !config.apiKey) {
-    console.error("FIREBASE_CONFIG não carregou.");
-  } else {
-    // evita erro de inicializar duas vezes
-    const app = getApps().length ? getApps()[0] : initializeApp(config);
-    const auth = getAuth(app);
-
-    btn.addEventListener("click", async () => {
-      btn.disabled = true;
-      btn.textContent = "Saindo...";
-      try {
-        await signOut(auth);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        window.location.replace("login.html");
-      }
-    });
-  }
+  btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    btn.textContent = "Saindo...";
+    try {
+      await signOut(auth);
+    } finally {
+      window.location.replace("login.html");
+    }
+  });
 }
