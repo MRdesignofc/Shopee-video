@@ -13,9 +13,6 @@
 
 <body class="page">
 
-  <!-- Skip link (acessibilidade) -->
-  <a class="skip" href="#homeView">Pular para conteúdo</a>
-
   <!-- Header -->
   <header class="topbar">
     <div class="wrap topbar__inner">
@@ -27,7 +24,13 @@
         </div>
       </a>
 
-      <nav class="topnav" aria-label="Navegação">
+      <!-- Botão mobile menu -->
+      <button class="iconBtn iconBtn--menu" id="menuBtn" type="button"
+              aria-label="Abrir menu" aria-expanded="false" aria-controls="topnav">
+        ☰
+      </button>
+
+      <nav class="topnav" id="topnav" aria-label="Navegação">
         <a class="topnav__link is-active" href="#" data-nav="home">Home</a>
         <a class="topnav__link" href="#" data-nav="categories">Categorias</a>
         <a class="topnav__link" href="#" data-nav="deals">Deals</a>
@@ -45,6 +48,9 @@
         <button class="btn btn--ghost" id="logoutBtn" type="button">Sair</button>
       </div>
     </div>
+
+    <!-- Overlay mobile -->
+    <div class="navOverlay" id="navOverlay" hidden></div>
   </header>
 
   <!-- Hero / Landing -->
@@ -217,5 +223,44 @@
 
   <!-- App -->
   <script type="module" src="products-live.js"></script>
+
+  <!-- Menu Mobile (não interfere nos seus módulos) -->
+  <script>
+    (function(){
+      const btn = document.getElementById('menuBtn');
+      const nav = document.getElementById('topnav');
+      const overlay = document.getElementById('navOverlay');
+
+      if (!btn || !nav || !overlay) return;
+
+      function openNav(){
+        nav.classList.add('is-open');
+        overlay.hidden = false;
+        btn.setAttribute('aria-expanded', 'true');
+        document.documentElement.classList.add('noScroll');
+      }
+      function closeNav(){
+        nav.classList.remove('is-open');
+        overlay.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+        document.documentElement.classList.remove('noScroll');
+      }
+
+      btn.addEventListener('click', function(){
+        nav.classList.contains('is-open') ? closeNav() : openNav();
+      });
+
+      overlay.addEventListener('click', closeNav);
+
+      nav.addEventListener('click', function(e){
+        const a = e.target.closest('a');
+        if (a) closeNav();
+      });
+
+      window.addEventListener('resize', function(){
+        if (window.matchMedia('(min-width: 981px)').matches) closeNav();
+      });
+    })();
+  </script>
 </body>
 </html>
