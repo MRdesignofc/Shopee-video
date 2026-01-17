@@ -20,6 +20,8 @@ jobs:
 
       - name: Update products
         run: node scripts/update-products.js
+        env:
+          PRODUCTS_FEED_URL: ${{ secrets.PRODUCTS_FEED_URL }}
 
       - name: Commit changes
         run: |
