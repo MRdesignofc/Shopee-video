@@ -938,3 +938,14 @@ body{
 @keyframes shimmer{
   100%{ transform: translateX(100%); }
 }
+.grid2{
+  margin-top:10px;
+  display:grid;
+  gap:12px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+@media (max-width:1200px){ .grid2{ grid-template-columns: repeat(4, 1fr); } }
+@media (max-width:760px){ .grid2{ grid-template-columns: repeat(2, 1fr); } }
+
+.grid2.is-compact .card h3{ display:none; }
+.grid2.is-compact .card .tag{ display:none; }
