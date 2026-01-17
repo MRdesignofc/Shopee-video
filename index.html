@@ -52,7 +52,7 @@
       </div>
     </section>
 
-    <!-- ✅ Controles e vitrines dentro do main (antes estava fora) -->
+    <!-- Controles (vitrines) -->
     <section class="controls">
       <div class="controls__left">
         <input id="q" class="input" type="search" placeholder="Buscar produto..." autocomplete="off" />
@@ -85,21 +85,22 @@
           <h2 class="shelf__title">Vendendo agora</h2>
           <span class="shelf__hint" id="updatedHint">—</span>
         </div>
-        <div class="grid" id="gridTrending"></div>
+        <!-- ✅ Troquei grid -> grid2 (evita conflito com sua .grid antiga) -->
+        <div class="grid2" id="gridTrending"></div>
       </div>
 
       <div class="shelf">
         <div class="shelf__head">
           <h2 class="shelf__title">Mais vendidos</h2>
         </div>
-        <div class="grid" id="gridBest"></div>
+        <div class="grid2" id="gridBest"></div>
       </div>
 
       <div class="shelf">
         <div class="shelf__head">
           <h2 class="shelf__title">Ofertas</h2>
         </div>
-        <div class="grid" id="gridDeals"></div>
+        <div class="grid2" id="gridDeals"></div>
       </div>
     </section>
 
@@ -107,11 +108,8 @@
       <div class="shelf__head">
         <h2 class="shelf__title">Ver tudo</h2>
       </div>
-      <div class="grid" id="gridAll"></div>
+      <div class="grid2" id="gridAll"></div>
     </section>
-
-    <!-- (Opcional) Grid antigo: mantenha apenas se seu app.js usa #grid -->
-   <section id="grid" class="grid"></section>
 
     <div class="footer">
       Dados atualizados automaticamente • Links podem conter afiliado • Use “Buscar no TikTok” para ver vídeos similares
