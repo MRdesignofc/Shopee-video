@@ -1,11 +1,10 @@
-// app.js (ESM)
+// app.js (ESM) — HOME limpa, foco total em produtos
 
 const fmtBRL = (n) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(Number(n) || 0);
 
 const $ = (id) => document.getElementById(id);
-
-function safeLower(s) { return (s || "").toString().toLowerCase(); }
+const safeLower = (s) => (s || "").toString().toLowerCase();
 
 function escapeHtml(s){
   return (s || "")
@@ -17,53 +16,24 @@ function escapeHtml(s){
 
 function uniqBy(arr, keyFn){
   const seen = new Set();
-  const out = [];
-  for (const it of arr){
-    const k = keyFn(it);
-    if (!seen.has(k)){
-      seen.add(k);
-      out.push(it);
-    }
-  }
-  return out;
+  return arr.filter(item => {
+    const k = keyFn(item);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
 }
 
 function readFavs(){
-  try{
+  try {
     return new Set(JSON.parse(localStorage.getItem("shoptrends_favs") || "[]"));
-  }catch{
+  } catch {
     return new Set();
   }
 }
 
 function writeFavs(set){
   localStorage.setItem("shoptrends_favs", JSON.stringify([...set]));
-}
-
-function scoreMiniaturas(p){
-  const t = safeLower(p.title);
-  const keys = [
-    ["hot wheels", 40],
-    ["hotwheels", 40],
-    ["1:64", 35],
-    ["escala 1:64", 35],
-    ["diecast", 30],
-    ["miniatura", 22],
-    ["diorama", 20],
-    ["pista", 14],
-    ["garage", 12],
-    ["garagem", 12],
-    ["colecion", 10],
-    ["matchbox", 14],
-  ];
-  let s = 0;
-  for (const [k,w] of keys) if (t.includes(k)) s += w;
-  return s;
-}
-
-function buildTikTokUrl(title){
-  const q = encodeURIComponent((title || "produto shopee") + " review unboxing");
-  return `https://www.tiktok.com/search?q=${q}`;
 }
 
 export function createShopTrendsApp({
@@ -75,18 +45,14 @@ export function createShopTrendsApp({
   let ALL = [];
   let CATS = [];
   let updatedAt = "";
-  let view = "home"; // home | all | now | best | deals | cat:<slug>
-  let compact = false;
-
+  let view = "home";
   let page = 1;
-  let favs = readFavs();
+  let compact = false;
   let onlyFav = false;
+  let favs = readFavs();
 
-  const loadingPill = $("loadingPill");
   const meta = $("meta");
-
-  const elCats = $("cats");
-  const elHeroCats = document.querySelector(".heroCats");
+  const loadingPill = $("loadingPill");
 
   const homeView = $("homeView");
   const listView = $("listView");
@@ -105,10 +71,6 @@ export function createShopTrendsApp({
 
   const selCat = $("cat");
   const selSort = $("sort");
-
-  const loadMoreBtn = $("loadMoreBtn");
-  const loadMoreHint = $("loadMoreHint");
-
   const qInput = $("q");
   const btnSearch = $("btnSearch");
   const btnDeals = $("btnDeals");
@@ -116,225 +78,98 @@ export function createShopTrendsApp({
   const toggleViewBtn = $("toggleView");
   const onlyFavBtn = $("onlyFav");
 
+  const loadMoreBtn = $("loadMoreBtn");
+  const loadMoreHint = $("loadMoreHint");
+
   function setLoading(on){
-    if (!loadingPill) return;
-    loadingPill.hidden = !on;
+    if (loadingPill) loadingPill.hidden = !on;
   }
 
   function setMeta(){
-    const count = ALL.length || 0;
     meta.textContent = updatedAt
-      ? `Atualizado: ${updatedAt} • ${count} itens`
-      : `Atualizando... • ${count} itens`;
+      ? `Atualizado: ${updatedAt} • ${ALL.length} itens`
+      : "Atualizando...";
   }
 
   async function load(){
     setLoading(true);
 
-    // products
     const products = await fetch(productsUrl, { cache: "no-store" }).then(r => r.json());
     updatedAt = products.updatedAt || "";
-    ALL = (products.items || []).filter(Boolean);
+    ALL = products.items || [];
 
-    // categories (se falhar, deriva do products)
-    try{
+    try {
       const cats = await fetch(categoriesUrl, { cache: "no-store" }).then(r => r.json());
       CATS = Array.isArray(cats) ? cats : [];
-    }catch{
+    } catch {
       CATS = [];
     }
 
-    // Se vierem "vendendo-agora/mais-vendidos" como categoria, removemos da lista de categorias reais
-    CATS = (CATS || []).filter(c => c && c.slug && c.name && c.slug !== "vendendo-agora" && c.slug !== "mais-vendidos");
-
     if (!CATS.length){
-      const uniqCats = uniqBy(
-        ALL
-          .filter(p => p.categorySlug && p.categoryName)
-          .map(p => ({ slug: p.categorySlug, name: p.categoryName })),
-        (x) => x.slug
+      CATS = uniqBy(
+        ALL.map(p => ({
+          slug: p.categorySlug,
+          name: p.categoryName
+        })).filter(c => c.slug && c.name),
+        c => c.slug
       );
-      CATS = uniqCats.sort((a,b) => a.name.localeCompare(b.name, "pt-BR"));
     }
 
-    // Preenche selects
-    selCat.innerHTML = `<option value="all">Todas categorias</option>` +
-      CATS.map(c => `<option value="${escapeHtml(c.slug)}">${escapeHtml(c.name)}</option>`).join("");
+    selCat.innerHTML =
+      `<option value="all">Todas categorias</option>` +
+      CATS.map(c => `<option value="${c.slug}">${escapeHtml(c.name)}</option>`).join("");
 
-    // Render UI base
     setMeta();
-    renderChips();
-    renderHeroShortcuts();
-    applyCompact();
     render();
-
     setLoading(false);
   }
 
-  function applyCompact(){
-    const grids = document.querySelectorAll(".grid");
-    grids.forEach(g => {
-      if (compact) g.classList.add("is-compact");
-      else g.classList.remove("is-compact");
-    });
+  function applyFilters(){
+    let items = [...ALL];
 
-    toggleViewBtn.setAttribute("aria-pressed", compact ? "true" : "false");
-    toggleViewBtn.textContent = compact ? "Cards" : "Miniaturas";
-  }
+    const q = safeLower(qInput.value);
+    if (q) items = items.filter(p => safeLower(p.title).includes(q));
 
-  function renderHeroShortcuts(){
-    if (!elHeroCats) return;
-
-    const quick = [
-      { slug: "eletronicos", name: "Eletrônicos", icon: "🎧" },
-      { slug: "moda-feminina", name: "Moda", icon: "👕" },
-      { slug: "casa", name: "Casa & Decoração", icon: "🏠" },
-      { slug: "beleza", name: "Beleza", icon: "💄" },
-    ];
-
-    elHeroCats.innerHTML = "";
-    for (const q of quick){
-      const btn = document.createElement("div");
-      btn.className = "heroCat";
-      btn.innerHTML = `
-        <div class="heroCat__icon">${q.icon}</div>
-        <div class="heroCat__label">${escapeHtml(q.name)}</div>
-      `;
-      btn.onclick = () => {
-        const found = CATS.find(c => c.slug === q.slug) || CATS.find(c => safeLower(c.name).includes(safeLower(q.name)));
-        if (found) setView(`cat:${found.slug}`);
-        else setView("all");
-      };
-      elHeroCats.appendChild(btn);
+    if (selCat.value !== "all"){
+      items = items.filter(p => p.categorySlug === selCat.value);
     }
-  }
-
-  function renderChips(){
-    elCats.innerHTML = "";
-
-    const items = [
-      { key: "all", label: "Todos" },
-      { key: "now", label: "Vendendo agora" },
-      { key: "best", label: "Mais vendidos" },
-      { key: "deals", label: "Ofertas" },
-      ...CATS.map(c => ({ key: `cat:${c.slug}`, label: c.name })),
-    ];
-
-    for (const it of items){
-      const b = document.createElement("button");
-      b.className = "chip";
-      b.type = "button";
-      b.dataset.key = it.key;
-      b.textContent = it.label;
-      b.onclick = () => setView(it.key);
-      elCats.appendChild(b);
-    }
-
-    paintActiveChip();
-  }
-
-  function paintActiveChip(){
-    const buttons = elCats.querySelectorAll(".chip");
-    buttons.forEach(btn => btn.classList.remove("active"));
-
-    const activeKey =
-      view === "all" ? "all" :
-      view === "now" ? "now" :
-      view === "best" ? "best" :
-      view === "deals" ? "deals" :
-      view.startsWith("cat:") ? view :
-      "all";
-
-    const activeBtn = elCats.querySelector(`.chip[data-key="${CSS.escape(activeKey)}"]`);
-    if (activeBtn) activeBtn.classList.add("active");
-  }
-
-  function setView(v){
-    view = v;
-    page = 1;
-    paintActiveChip();
-    render();
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  function currentQuery(){
-    return safeLower(qInput.value).trim();
-  }
-
-  function baseFiltered(){
-    const q = currentQuery();
-    let items = ALL;
 
     if (onlyFav){
-      items = items.filter(p => favs.has(p.sourceId || p.productUrl || p.title));
-    }
-
-    const catSel = selCat.value;
-    if (catSel && catSel !== "all"){
-      items = items.filter(p => p.categorySlug === catSel);
-    }
-
-    if (view.startsWith("cat:")){
-      const slug = view.split(":")[1];
-      items = items.filter(p => p.categorySlug === slug);
-    }
-
-    if (q){
-      items = items.filter(p => safeLower(p.title).includes(q));
+      items = items.filter(p => favs.has(p.sourceId || p.productUrl));
     }
 
     return items;
-  }
-
-  function getDeals(items){
-    const deals = items.filter(p => p.promoPrice != null && Number(p.promoPrice) < Number(p.price));
-    if (deals.length >= 24) return deals;
-    const cheap = [...items].sort((a,b) => (Number(a.price)||0) - (Number(b.price)||0)).slice(0, 80);
-    return uniqBy([...deals, ...cheap], (p) => p.sourceId || p.productUrl || p.title);
   }
 
   function sortItems(items){
     const sort = selSort.value;
 
     if (sort === "price_asc"){
-      return [...items].sort((a,b) => (Number(a.promoPrice ?? a.price)||0) - (Number(b.promoPrice ?? b.price)||0));
+      return [...items].sort((a,b) => (a.promoPrice ?? a.price) - (b.promoPrice ?? b.price));
     }
     if (sort === "price_desc"){
-      return [...items].sort((a,b) => (Number(b.promoPrice ?? b.price)||0) - (Number(a.promoPrice ?? a.price)||0));
+      return [...items].sort((a,b) => (b.promoPrice ?? b.price) - (a.promoPrice ?? a.price));
     }
     if (sort === "discount"){
-      return [...items].sort((a,b) => {
-        const da = (Number(a.price)||0) - (Number(a.promoPrice ?? a.price)||0);
-        const db = (Number(b.price)||0) - (Number(b.promoPrice ?? b.price)||0);
-        return db - da;
-      });
-    }
-    if (sort === "newest"){
-      return [...items];
-    }
-    if (sort === "bestsellers"){
-      return [...items].sort((a,b) => (Number(b.price)||0) - (Number(a.price)||0));
-    }
-
-    if ((view === "all" && selCat.value === "miniaturas") || view === "cat:miniaturas"){
-      return [...items].sort((a,b) => scoreMiniaturas(b) - scoreMiniaturas(a));
+      return [...items].sort((a,b) =>
+        ((b.price || 0) - (b.promoPrice ?? b.price)) -
+        ((a.price || 0) - (a.promoPrice ?? a.price))
+      );
     }
 
     return items;
   }
 
-  function ensureViewVisibility(){
-    const isHome = (view === "home");
-    homeView.hidden = !isHome;
-    listView.hidden = isHome;
+  function ensureView(){
+    homeView.hidden = view !== "home";
+    listView.hidden = view === "home";
   }
 
   function render(){
     setMeta();
-    ensureViewVisibility();
-    applyCompact();
+    ensureView();
 
-    const base = sortItems(baseFiltered());
+    const base = sortItems(applyFilters());
 
     if (view !== "home"){
       renderList(base);
@@ -342,8 +177,8 @@ export function createShopTrendsApp({
     }
 
     const now = base.slice(0, 16);
-    const best = [...base].sort((a,b) => (Number(b.price)||0) - (Number(a.price)||0)).slice(0, 16);
-    const deals = getDeals(base).slice(0, 16);
+    const best = [...base].sort((a,b) => (b.price || 0) - (a.price || 0)).slice(0, 16);
+    const deals = base.filter(p => p.promoPrice && p.promoPrice < p.price).slice(0, 16);
 
     hintNow.textContent = `${now.length} itens`;
     hintBest.textContent = `${best.length} itens`;
@@ -354,92 +189,51 @@ export function createShopTrendsApp({
     renderGrid(gridDeals, deals);
   }
 
-  function renderList(base){
-    let title = "Todos os produtos";
-    if (view === "all") title = "Todos os produtos";
-    if (view === "now") title = "Vendendo agora";
-    if (view === "best") title = "Mais vendidos";
-    if (view === "deals") title = "Ofertas";
-    if (view.startsWith("cat:")){
-      const slug = view.split(":")[1];
-      title = CATS.find(c => c.slug === slug)?.name || "Categoria";
-    }
-    listTitle.textContent = title;
-
-    let items = base;
-
-    if (view === "now"){
-      items = base.slice(0, 500);
-    } else if (view === "best"){
-      items = [...base].sort((a,b) => (Number(b.price)||0) - (Number(a.price)||0));
-    } else if (view === "deals"){
-      items = getDeals(base);
-    } else if (view.startsWith("cat:")){
-      if (view === "cat:miniaturas"){
-        items = [...items].sort((a,b) => scoreMiniaturas(b) - scoreMiniaturas(a));
-      }
-    }
-
+  function renderList(items){
     const total = items.length;
     const shown = Math.min(total, page * perPage);
     const slice = items.slice(0, shown);
 
+    listTitle.textContent = "Todos os produtos";
     listSub.textContent = `${shown} de ${total} itens`;
+
     renderGrid(gridAll, slice);
 
     const hasMore = shown < total;
     loadMoreBtn.disabled = !hasMore;
-    loadMoreBtn.style.opacity = hasMore ? "1" : ".6";
     loadMoreBtn.textContent = hasMore ? "Carregar mais" : "Tudo carregado";
     loadMoreHint.textContent = hasMore ? `Mostrando ${shown} de ${total}` : `Total: ${total}`;
   }
 
-  function renderGrid(gridEl, items){
-    gridEl.innerHTML = "";
+  function renderGrid(grid, items){
+    grid.innerHTML = "";
 
     if (!items.length){
-      gridEl.innerHTML = `<div class="small">Nenhum produto encontrado.</div>`;
+      grid.innerHTML = `<div class="small">Nenhum produto encontrado.</div>`;
       return;
     }
 
     for (const p of items){
-      const id = p.sourceId || p.productUrl || p.title;
+      const id = p.sourceId || p.productUrl;
       const isFav = favs.has(id);
-      const price = Number(p.promoPrice ?? p.price) || 0;
-      const old = (p.promoPrice != null && Number(p.price) > Number(p.promoPrice)) ? Number(p.price) : null;
 
       const card = document.createElement("article");
       card.className = "card";
       card.innerHTML = `
         <div class="card__imgWrap">
-          <img class="card__img" src="${escapeHtml(p.imageUrl || "")}" alt="${escapeHtml(p.title || "")}" loading="lazy"
-               onerror="this.style.opacity='.25'; this.style.filter='grayscale(1)';" />
+          <img src="${escapeHtml(p.imageUrl || "")}" loading="lazy" />
         </div>
-
         <div class="card__pad">
-          <h3 class="card__title">${escapeHtml(p.title || "Produto")}</h3>
-
+          <h3 class="card__title">${escapeHtml(p.title)}</h3>
           <div class="priceRow">
-            <div class="price">
-              ${fmtBRL(price)}
-              ${old ? `<span class="priceOld">${fmtBRL(old)}</span>` : ""}
-            </div>
-            <span class="small">Shopee</span>
+            <div class="price">${fmtBRL(p.promoPrice ?? p.price)}</div>
           </div>
-
-          <div class="tag">${escapeHtml(p.categoryName || "")}</div>
-
           <div class="card__actions">
-            <button class="card__cta" type="button">Ver</button>
-            <button class="favBtn ${isFav ? "is-on" : ""}" type="button" aria-label="Favoritar">
-              ${isFav ? "❤️" : "🤍"}
-            </button>
+            <button class="card__cta">Ver</button>
+            <button class="favBtn ${isFav ? "is-on" : ""}">${isFav ? "❤️" : "🤍"}</button>
           </div>
         </div>
       `;
-
-      card.querySelector(".card__cta").onclick = (e) => { e.stopPropagation(); openModal(p); };
-      card.onclick = () => openModal(p);
 
       card.querySelector(".favBtn").onclick = (e) => {
         e.stopPropagation();
@@ -449,69 +243,51 @@ export function createShopTrendsApp({
         render();
       };
 
-      gridEl.appendChild(card);
+      card.onclick = () => openModal(p);
+      grid.appendChild(card);
     }
   }
 
   function openModal(p){
-    const modal = $("modal");
     $("m_img").src = p.imageUrl || "";
-    $("m_title").textContent = p.title || "Produto";
+    $("m_title").textContent = p.title;
     $("m_price").textContent = fmtBRL(p.promoPrice ?? p.price);
     $("m_cat").textContent = p.categoryName || "";
-
-    $("m_buy").href = p.productUrl || "#";
-    $("m_tiktok").href = p.tiktokUrl || buildTikTokUrl(p.title);
-
-    modal.showModal();
+    $("m_buy").href = p.productUrl;
+    $("m_tiktok").href = p.tiktokUrl || "#";
+    $("modal").showModal();
   }
 
   function bind(){
-    $("close").onclick = () => $("modal").close();
-    $("modal").addEventListener("click", (e) => {
-      if (e.target.id === "modal") $("modal").close();
+    btnSearch.onclick = () => { view = "all"; page = 1; render(); };
+    btnDeals.onclick = () => { view = "all"; selSort.value = "discount"; render(); };
+
+    qInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") btnSearch.click();
     });
 
-    btnSearch.onclick = () => {
-      if (view === "home") setView("all");
-      else render();
-    };
-    qInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter"){
-        if (view === "home") setView("all");
-        else render();
-      }
-    });
-
-    btnDeals.onclick = () => setView("deals");
-
-    selCat.addEventListener("change", () => render());
-    selSort.addEventListener("change", () => render());
+    selCat.onchange = render;
+    selSort.onchange = render;
 
     toggleViewBtn.onclick = () => {
       compact = !compact;
-      applyCompact();
+      document.querySelectorAll(".grid").forEach(g =>
+        g.classList.toggle("is-compact", compact)
+      );
     };
 
     onlyFavBtn.onclick = () => {
       onlyFav = !onlyFav;
-      onlyFavBtn.setAttribute("aria-pressed", onlyFav ? "true" : "false");
       onlyFavBtn.textContent = onlyFav ? "Favoritos ✓" : "Favoritos";
       render();
     };
 
-    loadMoreBtn.onclick = async () => {
-      if (loadMoreBtn.disabled) return;
-      setLoading(true);
-      loadMoreBtn.textContent = "Carregando...";
-      await new Promise(r => setTimeout(r, 250));
-      page += 1;
-      setLoading(false);
+    loadMoreBtn.onclick = () => {
+      page++;
       render();
     };
 
-    $("cartBtn").onclick = () => setView("deals");
-    $("userBtn").onclick = () => setView("all");
+    $("close").onclick = () => $("modal").close();
   }
 
   return {
