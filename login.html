@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Login • Shop Trends</title>
+  <title>Entrar • Shop Trends</title>
 
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="favicon.png">
@@ -14,138 +14,57 @@
 <body class="auth">
 
   <main class="authWrap">
-    <section class="authStage">
+    <section class="authCard">
 
-      <div class="authTop">
-        <div class="brand">
-          <img class="brand__logo" src="favicon.png" alt="Shop Trends">
-          <div class="brand__txt">
-            <strong>Shop Trends</strong>
-            <span>Bem-vindo de volta</span>
-          </div>
+      <!-- Brand -->
+      <div class="brand">
+        <img src="favicon.png" alt="Shop Trends">
+        <div>
+          <strong>Shop Trends</strong>
+          <span>Entre para ver as melhores ofertas</span>
         </div>
       </div>
 
-      <div class="authGrid">
-        <!-- LEFT -->
-        <div class="left">
-          <h1 class="headline">Bem-vindo de volta!</h1>
-          <p class="sub">
-            Entre em sua conta ou crie uma nova em segundos.
-          </p>
-
-          <div class="card">
-            <div class="tabs" role="tablist" aria-label="Login e cadastro">
-              <button class="tab is-active" id="tabLogin" role="tab" aria-selected="true" type="button">
-                Entrar
-              </button>
-              <button class="tab" id="tabSignup" role="tab" aria-selected="false" type="button">
-                Criar conta
-              </button>
-              <div class="tabs__underline" id="tabUnderline"></div>
-            </div>
-
-            <!-- LOGIN -->
-            <form id="loginForm" class="panel" autocomplete="on">
-              <label class="field">
-                <span class="ico" aria-hidden="true">👤</span>
-                <input id="loginEmail" type="email" placeholder="Seu e-mail" required autocomplete="email"/>
-              </label>
-
-              <label class="field">
-                <span class="ico" aria-hidden="true">🔒</span>
-                <input id="loginPass" type="password" placeholder="Sua senha" required autocomplete="current-password"/>
-                <button class="link" id="forgotBtn" type="button">Esqueceu sua senha?</button>
-              </label>
-
-              <button class="btn btn--primary" id="loginBtn" type="submit">
-                Entrar
-              </button>
-
-              <div class="or">
-                <span>Ou entre com</span>
-              </div>
-
-              <button class="btn btn--google" id="googleBtn" type="button">
-                <span class="gIcon" aria-hidden="true">G</span>
-                Continuar com Google
-              </button>
-
-              <p class="tiny">
-                Ao continuar, você concorda com nossos termos e políticas.
-              </p>
-
-              <p class="msg" id="msgLogin" aria-live="polite"></p>
-            </form>
-
-            <!-- SIGNUP -->
-            <form id="signupForm" class="panel is-hidden" autocomplete="on">
-              <label class="field">
-                <span class="ico" aria-hidden="true">👤</span>
-                <input id="signupEmail" type="email" placeholder="Seu e-mail" required autocomplete="email"/>
-              </label>
-
-              <label class="field">
-                <span class="ico" aria-hidden="true">🔒</span>
-                <input id="signupPass" type="password" placeholder="Crie uma senha" required autocomplete="new-password"/>
-              </label>
-
-              <label class="field">
-                <span class="ico" aria-hidden="true">🔒</span>
-                <input id="signupPass2" type="password" placeholder="Repita a senha" required autocomplete="new-password"/>
-              </label>
-
-              <button class="btn btn--primary" id="signupBtn" type="submit">
-                Criar conta
-              </button>
-
-              <div class="or">
-                <span>Ou crie com</span>
-              </div>
-
-              <button class="btn btn--google" id="googleBtn2" type="button">
-                <span class="gIcon" aria-hidden="true">G</span>
-                Continuar com Google
-              </button>
-
-              <p class="tiny">
-                Ao continuar, você concorda com nossos termos e políticas.
-              </p>
-
-              <p class="msg" id="msgSignup" aria-live="polite"></p>
-            </form>
-          </div>
-        </div>
-
-        <!-- RIGHT (ilustração estilo referência, sem imagem externa) -->
-        <div class="right" aria-hidden="true">
-          <div class="scene">
-            <div class="badge">25% <small>OFF</small></div>
-            <div class="floating heart">❤</div>
-            <div class="floating coin">💰</div>
-
-            <div class="platform"></div>
-
-            <div class="props">
-              <div class="box">
-                <div class="boxMark">S</div>
-              </div>
-              <div class="bag big"></div>
-              <div class="bag mid"></div>
-              <div class="bag small"></div>
-
-              <div class="headphone"></div>
-              <div class="shoe"></div>
-              <div class="shoe shoe2"></div>
-
-              <div class="bottle"></div>
-              <div class="lipstick"></div>
-            </div>
-
-            <div class="clouds"></div>
-          </div>
-        </div>
+      <!-- Tabs -->
+      <div class="tabs">
+        <button id="tabLogin" class="tab is-active" type="button">Entrar</button>
+        <button id="tabSignup" class="tab" type="button">Criar conta</button>
+        <div class="tabs__underline" id="tabUnderline"></div>
       </div>
+
+      <!-- LOGIN -->
+      <form id="loginForm" class="panel">
+        <input id="loginEmail" type="email" placeholder="Seu e-mail" required>
+        <input id="loginPass" type="password" placeholder="Sua senha" required>
+
+        <button class="btn btn--primary" type="submit">
+          Entrar
+        </button>
+
+        <button class="btn btn--google" id="googleBtn" type="button">
+          Continuar com Google
+        </button>
+
+        <p class="msg" id="msgLogin"></p>
+      </form>
+
+      <!-- SIGNUP -->
+      <form id="signupForm" class="panel is-hidden">
+        <input id="signupEmail" type="email" placeholder="Seu e-mail" required>
+        <input id="signupPass" type="password" placeholder="Crie uma senha" required>
+        <input id="signupPass2" type="password" placeholder="Repita a senha" required>
+
+        <button class="btn btn--primary" type="submit">
+          Criar conta
+        </button>
+
+        <button class="btn btn--google" id="googleBtn2" type="button">
+          Criar com Google
+        </button>
+
+        <p class="msg" id="msgSignup"></p>
+      </form>
+
     </section>
   </main>
 
