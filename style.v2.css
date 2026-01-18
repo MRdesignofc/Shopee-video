@@ -982,7 +982,3 @@ html.noScroll, html.noScroll body{ overflow:hidden; }
   .grid{ grid-template-columns: 1fr; }
   .heroCat{ min-width: 180px; }
 }
-/* TESTE FORÇADO */
-.hero {
-  background: linear-gradient(135deg, #00ff88, #00ccff) !important;
-}
