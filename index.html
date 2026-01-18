@@ -8,14 +8,15 @@
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="apple-touch-icon" href="favicon.png">
 
-  <link rel="stylesheet" href="style.v2.css?v=20260118-3">
+  <!-- Mantém o CSS que você já está usando -->
+  <link rel="stylesheet" href="style.v2.css?v=20260118-4"/>
 </head>
 
 <body class="page">
 
-  <!-- Header -->
+  <!-- Header (limpo, sem menu e sem ícones) -->
   <header class="topbar" role="banner">
-    <div class="wrap topbar__inner">
+    <div class="wrap topbar__inner topbar__inner--clean">
       <a class="brand" href="#" onclick="return false;">
         <img src="favicon.png" alt="Shop Trends" class="brand__logo">
         <div class="brand__txt">
@@ -24,78 +25,46 @@
         </div>
       </a>
 
-      <!-- Mobile: toggle do menu -->
-      <button class="iconBtn iconBtn--menu" id="menuBtn" type="button"
-              aria-label="Abrir menu" aria-expanded="false" aria-controls="topnav">
-        ☰
-      </button>
-
-      <nav class="topnav" id="topnav" aria-label="Navegação">
-        <a class="topnav__link is-active" href="#" data-nav="home">Home</a>
-        <a class="topnav__link" href="#" data-nav="categories">Categorias</a>
-        <a class="topnav__link" href="#" data-nav="deals">Deals</a>
-        <a class="topnav__link" href="#" data-nav="contact">Contato</a>
-      </nav>
-
       <div class="topbar__right">
-        <!-- app.js usa #meta -->
         <div class="pill" id="meta">Atualizando...</div>
-
-        <button class="iconBtn" id="cartBtn" type="button" aria-label="Carrinho" title="Carrinho">🛒</button>
-        <button class="iconBtn" id="userBtn" type="button" aria-label="Conta" title="Conta">👤</button>
-
         <button class="btn btn--ghost" id="logoutBtn" type="button">Sair</button>
       </div>
     </div>
-
-    <!-- Overlay do menu mobile -->
-    <div class="navOverlay" id="navOverlay" hidden></div>
   </header>
 
-  <!-- Hero -->
-  <section class="hero" aria-label="Destaque">
-    <div class="wrap hero__grid">
-      <div class="hero__copy">
+  <!-- HERO (mais moderno e agradável) -->
+  <section class="hero hero--clean" aria-label="Destaque">
+    <div class="wrap hero__grid hero__grid--clean">
+      <div class="hero__copy hero__copy--clean">
         <div class="hero__kicker">Ofertas em alta, atualizadas automaticamente</div>
 
-        <h1 class="hero__title">
+        <h1 class="hero__title hero__title--clean">
           Produtos da <span>Shopee</span>
         </h1>
 
-        <div class="hero__sub">
+        <p class="hero__sub hero__sub--clean">
           Encontre tendências, melhores vendidos e promoções com um clique.
-        </div>
+        </p>
 
-        <!-- app.js usa #q e #btnSearch -->
-        <div class="heroSearch" role="search">
+        <!-- Busca -->
+        <div class="heroSearch heroSearch--clean" role="search">
           <input id="q" class="heroSearch__input" type="search"
                  placeholder="Buscar produtos, marcas, categorias..." autocomplete="off" />
           <button id="btnSearch" class="heroSearch__btn" type="button">Buscar</button>
         </div>
 
-        <!-- preenchido via app.js (renderHeroShortcuts) -->
-        <div class="heroCats" aria-label="Atalhos de categorias"></div>
-
-        <div class="heroBar" role="note" aria-label="Chamada de ofertas">
-          <div class="heroBar__text">Frete grátis e descontos imperdíveis!</div>
-          <!-- app.js usa #btnDeals -->
+        <!-- CTAs (mais limpos) -->
+        <div class="heroCtas" aria-label="Ações rápidas">
           <button class="btn btn--primary" id="btnDeals" type="button">Ver ofertas</button>
+          <button class="btn btn--ghost" id="btnSeeAll" type="button">Ver tudo</button>
         </div>
-      </div>
 
-      <!-- Arte: mantém o impacto no desktop, e o CSS cuida do mobile -->
-      <div class="hero__art" aria-hidden="true">
-        <div class="artCard">
-          <div class="artCard__badge">50% OFF</div>
-          <div class="artCard__icons">
-            <div class="bubble">💎</div>
-            <div class="bubble">💄</div>
-            <div class="bubble">🎧</div>
-            <div class="bubble">👟</div>
-          </div>
-          <div class="artCard__caption">
-            Vitrine viva • Produtos em alta • Atualiza automático
-          </div>
+        <!-- Atalhos (continua sendo preenchido via app.js) -->
+        <div class="heroCats heroCats--clean" aria-label="Atalhos de categorias"></div>
+
+        <!-- Observação curta (substitui a barra grande que você riscou) -->
+        <div class="heroNote" aria-label="Aviso">
+          Links podem conter afiliado. Dica: use o TikTok para ver reviews e unboxings.
         </div>
       </div>
     </div>
@@ -103,26 +72,20 @@
     <div class="hero__clouds" aria-hidden="true"></div>
   </section>
 
-  <!-- Chips Row -->
-  <section class="wrap chipsRow" aria-label="Filtros principais">
-    <!-- app.js usa #cats -->
+  <!-- Chips (categorias) -->
+  <section class="wrap chipsRow chipsRow--clean" aria-label="Filtros principais">
     <div id="cats" class="chips"></div>
 
-    <div class="chipsRow__actions">
-      <!-- app.js usa #toggleView e #onlyFav -->
-      <button id="toggleView" class="btn btn--ghost" type="button" aria-pressed="false">
-        Miniaturas
-      </button>
-      <button id="onlyFav" class="btn btn--ghost" type="button" aria-pressed="false">
-        Favoritos
-      </button>
+    <!-- Mantidos ocultos apenas para não quebrar o app.js -->
+    <div class="chipsRow__actions is-hidden" aria-hidden="true">
+      <button id="toggleView" class="btn btn--ghost" type="button" aria-pressed="false">Miniaturas</button>
+      <button id="onlyFav" class="btn btn--ghost" type="button" aria-pressed="false">Favoritos</button>
     </div>
   </section>
 
-  <!-- Controls -->
-  <section class="wrap controls" aria-label="Controles de listagem">
+  <!-- Controles -->
+  <section class="wrap controls controls--clean" aria-label="Controles de listagem">
     <div class="controls__left">
-      <!-- app.js usa #cat e #sort -->
       <select id="cat" class="select" aria-label="Categoria">
         <option value="all">Todas categorias</option>
       </select>
@@ -138,7 +101,6 @@
     </div>
 
     <div class="controls__right">
-      <!-- app.js usa #loadingPill -->
       <div class="loadingPill" id="loadingPill" hidden>
         <span class="dot"></span> Carregando...
       </div>
@@ -149,7 +111,6 @@
   <main class="wrap content" role="main">
 
     <!-- HOME vitrines -->
-    <!-- app.js usa #homeView, #gridNow, #gridBest, #gridDeals, #hintNow, #hintBest, #hintDeals -->
     <section id="homeView" class="shelves" aria-label="Vitrines">
       <div class="shelf">
         <div class="shelf__head">
@@ -177,7 +138,6 @@
     </section>
 
     <!-- LISTAGEM -->
-    <!-- app.js usa #listView, #listTitle, #listSub, #gridAll, #loadMoreBtn, #loadMoreHint -->
     <section id="listView" class="listView" hidden aria-label="Lista completa">
       <div class="listHead">
         <h2 class="listHead__title" id="listTitle">Todos os produtos</h2>
@@ -193,12 +153,11 @@
     </section>
 
     <div class="footer">
-      Dados atualizados automaticamente • Links podem conter afiliado • Use “Buscar no TikTok” para ver vídeos similares
+      Dados atualizados automaticamente • Links podem conter afiliado
     </div>
   </main>
 
   <!-- Modal -->
-  <!-- app.js usa: #modal #close #m_img #m_title #m_price #m_cat #m_buy #m_tiktok -->
   <dialog id="modal" class="modal" aria-label="Detalhes do produto">
     <div class="modal__inner">
       <button class="modal__close" id="close" aria-label="Fechar">×</button>
@@ -220,56 +179,37 @@
         </div>
 
         <p class="small" style="margin-top:10px;">
-          Dica: pesquise no TikTok por “review”, “unboxing” e “testando” para achar vídeos mais parecidos.
+          Dica: pesquise no TikTok por “review”, “unboxing” e “testando”.
         </p>
       </div>
     </div>
   </dialog>
 
-  <!-- Firebase config (OBRIGATÓRIO) -->
+  <!-- Mantidos para não quebrar JS existente -->
+  <button id="cartBtn" hidden aria-hidden="true"></button>
+  <button id="userBtn" hidden aria-hidden="true"></button>
+
+  <!-- Firebase config -->
   <script src="firebase-config.js"></script>
 
-  <!-- Guard (OBRIGATÓRIO) -->
+  <!-- Guard -->
   <script type="module" src="guard.js"></script>
 
-  <!-- App (login/logout + createShopTrendsApp) -->
+  <!-- App -->
   <script type="module" src="products-live.js"></script>
 
-  <!-- Menu mobile (isolado; não interfere no app.js) -->
+  <!-- Ação "Ver tudo" (não interfere no app.js) -->
   <script>
-    (function () {
-      const btn = document.getElementById("menuBtn");
-      const nav = document.getElementById("topnav");
-      const overlay = document.getElementById("navOverlay");
-
-      if (!btn || !nav || !overlay) return;
-
-      function openNav() {
-        nav.classList.add("is-open");
-        overlay.hidden = false;
-        btn.setAttribute("aria-expanded", "true");
-        document.documentElement.classList.add("noScroll");
-      }
-      function closeNav() {
-        nav.classList.remove("is-open");
-        overlay.hidden = true;
-        btn.setAttribute("aria-expanded", "false");
-        document.documentElement.classList.remove("noScroll");
-      }
-
-      btn.addEventListener("click", function () {
-        nav.classList.contains("is-open") ? closeNav() : openNav();
-      });
-
-      overlay.addEventListener("click", closeNav);
-
-      nav.addEventListener("click", function (e) {
-        const a = e.target.closest("a");
-        if (a) closeNav();
-      });
-
-      window.addEventListener("resize", function () {
-        if (window.matchMedia("(min-width: 981px)").matches) closeNav();
+    (function(){
+      const btn = document.getElementById("btnSeeAll");
+      if (!btn) return;
+      btn.addEventListener("click", () => {
+        // aciona a mesma lógica do app.js: buscar leva pra listagem ("all")
+        const q = document.getElementById("q");
+        if (q) q.focus();
+        // simulamos o comportamento do botão Buscar quando está na home:
+        const btnSearch = document.getElementById("btnSearch");
+        if (btnSearch) btnSearch.click();
       });
     })();
   </script>
