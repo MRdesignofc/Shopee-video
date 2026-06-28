@@ -1,6 +1,19 @@
 {
-  "updatedAt": "2026-06-28 17:06 UTC",
+  "updatedAt": "2026-06-28 19:14 UTC",
   "items": [
+    {
+      "source": "shopee_affiliate",
+      "sourceId": "c9d7baababd90d8e",
+      "title": "Agua micelar para skincare  rosa mosqueta bello charme",
+      "imageUrl": "https://cf.shopee.com.br/file/br-11134207-820lt-moh92otuq32860",
+      "price": 20,
+      "promoPrice": null,
+      "productUrl": "https://s.shopee.com.br/1gGbcCG0Dx",
+      "categorySlug": "beleza",
+      "categoryName": "Beleza",
+      "tiktokUrl": "https://www.tiktok.com/search?q=Agua%20micelar%20para%20skincare%20%20rosa%20mosqueta%20bello%20charme%20Beleza%20review%20unboxing%20testando",
+      "addedAt": "2026-06-28T19:13:35.980Z"
+    },
     {
       "source": "shopee_affiliate",
       "sourceId": "891620803268d666",
@@ -1943,7 +1956,7 @@
       "sourceId": "9f890455e7501288",
       "title": "KIT 3 Blusa Termica Feminina Blusa De Frio Feminina Blusa Gola Alta Feminino Blusas Cacharrel",
       "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-7rff8-m97wnvkqe9d3cf",
-      "price": 64.9,
+      "price": 59.9,
       "promoPrice": null,
       "productUrl": "https://s.shopee.com.br/9fIssa76AD",
       "categorySlug": "brinquedos",
@@ -20584,7 +20597,7 @@
       "source": "shopee_affiliate",
       "sourceId": "65ee4229c59d4054",
       "title": "Brinquedo Jogo De Logica Raciocinio Quebra Cabeca Infantil 3D",
-      "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-824g9-mph0hnmm1xxr03",
+      "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-824gk-mph0ho6dbk7j0c",
       "price": 148.56,
       "promoPrice": null,
       "productUrl": "https://s.shopee.com.br/7Kuxdejw5T",
@@ -155986,19 +155999,6 @@
       "categorySlug": "infantis",
       "categoryName": "Infantis",
       "tiktokUrl": "https://www.tiktok.com/search?q=Kit%20Educativo%20Infantil%20Cocoric%C3%B3%20%E2%80%93%20Jogos%20e%20Brincadeiras%20Matem%C3%A1ticas%20%7C%20Terra%20do%20Saber%20Infantis%20review%20unboxing%20testando",
-      "addedAt": "2026-06-24T06:45:17.680Z"
-    },
-    {
-      "source": "shopee_affiliate",
-      "sourceId": "f97efd0b9224ff11",
-      "title": "Kit Educativo Infantil Cocoricó – Você Sabe? | Terra do Saber",
-      "imageUrl": "https://cf.shopee.com.br/file/br-11134207-81z1k-mii039jjnaip17",
-      "price": 20,
-      "promoPrice": null,
-      "productUrl": "https://s.shopee.com.br/5VTCyI26r3",
-      "categorySlug": "infantis",
-      "categoryName": "Infantis",
-      "tiktokUrl": "https://www.tiktok.com/search?q=Kit%20Educativo%20Infantil%20Cocoric%C3%B3%20%E2%80%93%20Voc%C3%AA%20Sabe%3F%20%7C%20Terra%20do%20Saber%20Infantis%20review%20unboxing%20testando",
       "addedAt": "2026-06-24T06:45:17.680Z"
     }
   ]
