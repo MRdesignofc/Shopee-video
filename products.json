@@ -1,6 +1,19 @@
 {
-  "updatedAt": "2026-07-19 23:54 UTC",
+  "updatedAt": "2026-07-20 02:36 UTC",
   "items": [
+    {
+      "source": "shopee_affiliate",
+      "sourceId": "b732660e2b891aff",
+      "title": "Conjunto Moletom Infantil Masculino Camuflado",
+      "imageUrl": "https://cf.shopee.com.br/file/br-11134207-81ztc-mjsfd0xhxm9yb8",
+      "price": 76.9,
+      "promoPrice": null,
+      "productUrl": "https://s.shopee.com.br/5fnIMgFsNk",
+      "categorySlug": "moda-masculina",
+      "categoryName": "Moda Masculina",
+      "tiktokUrl": "https://www.tiktok.com/search?q=Conjunto%20Moletom%20Infantil%20Masculino%20Camuflado%20Moda%20Masculina%20review%20unboxing%20testando",
+      "addedAt": "2026-07-20T02:36:41.041Z"
+    },
     {
       "source": "shopee_affiliate",
       "sourceId": "f22521fdbe4c6e1b",
@@ -1839,7 +1852,7 @@
       "sourceId": "49e8766167ec7c5f",
       "title": "Descascador Elétrico De Alho E Uva Em Aço Inox Automático Prático",
       "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-82606-mk1vqhrkzy882b",
-      "price": 149.89,
+      "price": 59.99,
       "promoPrice": null,
       "productUrl": "https://s.shopee.com.br/70IfWbbbtD",
       "categorySlug": "brinquedos",
@@ -155986,19 +155999,6 @@
       "categorySlug": "beleza",
       "categoryName": "Beleza",
       "tiktokUrl": "https://www.tiktok.com/search?q=Sabonete%20L%C3%ADquido%20Hidratante%20Facial%20Fisiogel%20Pele%20Seca%20e%20Sens%C3%ADvel%20com%20150ml%20Beleza%20review%20unboxing%20testando",
-      "addedAt": "2026-07-15T10:45:47.725Z"
-    },
-    {
-      "source": "shopee_affiliate",
-      "sourceId": "a81d7e2a9734f620",
-      "title": "Sabonete Líquido Hidratante Facial e Corporal Fisiogel com 150ml",
-      "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-824h8-me61urnmfu2q4d",
-      "price": 74.45,
-      "promoPrice": null,
-      "productUrl": "https://s.shopee.com.br/1LeBlquJ5k",
-      "categorySlug": "beleza",
-      "categoryName": "Beleza",
-      "tiktokUrl": "https://www.tiktok.com/search?q=Sabonete%20L%C3%ADquido%20Hidratante%20Facial%20e%20Corporal%20Fisiogel%20com%20150ml%20Beleza%20review%20unboxing%20testando",
       "addedAt": "2026-07-15T10:45:47.725Z"
     }
   ]
