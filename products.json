@@ -1,6 +1,84 @@
 {
-  "updatedAt": "2026-08-08 16:28 UTC",
+  "updatedAt": "2026-08-08 17:26 UTC",
   "items": [
+    {
+      "source": "shopee_affiliate",
+      "sourceId": "75503ddeeffb7a73",
+      "title": "Carregador Parede 1Hora PD 20W Porta Tipo Usb A+C Branco",
+      "imageUrl": "https://cf.shopee.com.br/file/br-11134201-7r98o-lwg64fzvmpt79d",
+      "price": 39.9,
+      "promoPrice": null,
+      "productUrl": "https://s.shopee.com.br/4AyzruYx4D",
+      "categorySlug": "eletronicos",
+      "categoryName": "Eletrônicos & Acessórios",
+      "tiktokUrl": "https://www.tiktok.com/search?q=Carregador%20Parede%201Hora%20PD%2020W%20Porta%20Tipo%20Usb%20A%2BC%20Branco%20Eletr%C3%B4nicos%20%26%20Acess%C3%B3rios%20review%20unboxing%20testando",
+      "addedAt": "2026-08-08T17:25:53.032Z"
+    },
+    {
+      "source": "shopee_affiliate",
+      "sourceId": "10492e1734064f36",
+      "title": "Cabo Carregador Turbo 3 Em 1 Tipo C Lightning Micro USB 2m Carga Rápida Dados Universal Celular",
+      "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-824ik-mpolnlwwr4lnb5",
+      "price": 37.9,
+      "promoPrice": null,
+      "productUrl": "https://s.shopee.com.br/4LIQ4DYJjG",
+      "categorySlug": "eletronicos",
+      "categoryName": "Eletrônicos & Acessórios",
+      "tiktokUrl": "https://www.tiktok.com/search?q=Cabo%20Carregador%20Turbo%203%20Em%201%20Tipo%20C%20Lightning%20Micro%20USB%202m%20Carga%20R%C3%A1pida%20Dados%20Universal%20Celular%20Eletr%C3%B4nicos%20%26%20Acess%C3%B3rios%20review%20unboxing%20testando",
+      "addedAt": "2026-08-08T17:25:53.032Z"
+    },
+    {
+      "source": "shopee_affiliate",
+      "sourceId": "69cc094d335c5516",
+      "title": "Fonte Carregador Turbo Tipo C Rápido Celular Android iPhone Tomada Parede Cabo USB Energia Potente",
+      "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-8259m-mfx2ffmkdjig62",
+      "price": 49.99,
+      "promoPrice": null,
+      "productUrl": "https://s.shopee.com.br/4VbqGWXgOJ",
+      "categorySlug": "eletronicos",
+      "categoryName": "Eletrônicos & Acessórios",
+      "tiktokUrl": "https://www.tiktok.com/search?q=Fonte%20Carregador%20Turbo%20Tipo%20C%20R%C3%A1pido%20Celular%20Android%20iPhone%20Tomada%20Parede%20Cabo%20USB%20Energia%20Potente%20Eletr%C3%B4nicos%20%26%20Acess%C3%B3rios%20review%20unboxing%20testando",
+      "addedAt": "2026-08-08T17:25:53.032Z"
+    },
+    {
+      "source": "shopee_affiliate",
+      "sourceId": "92196ef3558202c3",
+      "title": "UGREEN Cabo Usb Tipo C Macho/Macho 3Metros Preto",
+      "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-7rd6a-m70dhvjdvkonca",
+      "price": 96.04,
+      "promoPrice": null,
+      "productUrl": "https://s.shopee.com.br/4fvGSpX33M",
+      "categorySlug": "eletronicos",
+      "categoryName": "Eletrônicos & Acessórios",
+      "tiktokUrl": "https://www.tiktok.com/search?q=UGREEN%20Cabo%20Usb%20Tipo%20C%20Macho%2FMacho%203Metros%20Preto%20Eletr%C3%B4nicos%20%26%20Acess%C3%B3rios%20review%20unboxing%20testando",
+      "addedAt": "2026-08-08T17:25:53.032Z"
+    },
+    {
+      "source": "shopee_affiliate",
+      "sourceId": "a5b4e6590a16ae68",
+      "title": "UGREEN Hub Multifuncional 6 em 1 para Usb C Cinza",
+      "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-7rd6m-m70dcz4s0yjtf4",
+      "price": 331.88,
+      "promoPrice": null,
+      "productUrl": "https://s.shopee.com.br/4qEgf8WPiP",
+      "categorySlug": "eletronicos",
+      "categoryName": "Eletrônicos & Acessórios",
+      "tiktokUrl": "https://www.tiktok.com/search?q=UGREEN%20Hub%20Multifuncional%206%20em%201%20para%20Usb%20C%20Cinza%20Eletr%C3%B4nicos%20%26%20Acess%C3%B3rios%20review%20unboxing%20testando",
+      "addedAt": "2026-08-08T17:25:53.032Z"
+    },
+    {
+      "source": "shopee_affiliate",
+      "sourceId": "33d75b98acbfe3b4",
+      "title": "UGREEN Adaptador Usb C para Rj45 Fêmea Ethernet Cinza",
+      "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-7rd4w-m70ddhit45owcb",
+      "price": 256.77,
+      "promoPrice": null,
+      "productUrl": "https://s.shopee.com.br/50Y6rRVmNS",
+      "categorySlug": "eletronicos",
+      "categoryName": "Eletrônicos & Acessórios",
+      "tiktokUrl": "https://www.tiktok.com/search?q=UGREEN%20Adaptador%20Usb%20C%20para%20Rj45%20F%C3%AAmea%20Ethernet%20Cinza%20Eletr%C3%B4nicos%20%26%20Acess%C3%B3rios%20review%20unboxing%20testando",
+      "addedAt": "2026-08-08T17:25:53.032Z"
+    },
     {
       "source": "shopee_affiliate",
       "sourceId": "12230ab0de52d516",
@@ -22,9 +100,9 @@
       "price": 14.3,
       "promoPrice": null,
       "productUrl": "https://s.shopee.com.br/AUt3HJJ8NF",
-      "categorySlug": "vendendo-agora",
-      "categoryName": "Vendendo agora",
-      "tiktokUrl": "https://www.tiktok.com/search?q=Kit%202%20Capinha%20Para%20Iphone%20Anti%20Impacto%20Transparente%20Tpu%20%20Para%20IPhone%2011%2012%2013%2014%2015%2016%20Pronto%20Entrega%20Vendendo%20agora%20review%20unboxing%20testando",
+      "categorySlug": "pet",
+      "categoryName": "Pet Shop",
+      "tiktokUrl": "https://www.tiktok.com/search?q=Kit%202%20Capinha%20Para%20Iphone%20Anti%20Impacto%20Transparente%20Tpu%20%20Para%20IPhone%2011%2012%2013%2014%2015%2016%20Pronto%20Entrega%20Pet%20Shop%20review%20unboxing%20testando",
       "addedAt": "2026-08-08T15:25:54.511Z"
     },
     {
@@ -308,9 +386,9 @@
       "price": 209.99,
       "promoPrice": null,
       "productUrl": "https://s.shopee.com.br/2VqlggXDdW",
-      "categorySlug": "vendendo-agora",
-      "categoryName": "Vendendo agora",
-      "tiktokUrl": "https://www.tiktok.com/search?q=Bateria%20Auxiliar%20De%20Partida%20Port%C3%A1til%20Com%20Bomba%20De%20Ar%20Vendendo%20agora%20review%20unboxing%20testando",
+      "categorySlug": "pet",
+      "categoryName": "Pet Shop",
+      "tiktokUrl": "https://www.tiktok.com/search?q=Bateria%20Auxiliar%20De%20Partida%20Port%C3%A1til%20Com%20Bomba%20De%20Ar%20Pet%20Shop%20review%20unboxing%20testando",
       "addedAt": "2026-08-08T14:28:46.765Z"
     },
     {
@@ -360,9 +438,9 @@
       "price": 53.95,
       "promoPrice": null,
       "productUrl": "https://s.shopee.com.br/8V7ypiANSk",
-      "categorySlug": "vendendo-agora",
-      "categoryName": "Vendendo agora",
-      "tiktokUrl": "https://www.tiktok.com/search?q=Carregador%20de%20bateria%20automotivo%20inteligente%2012%20V%20-%20Display%20Digital%20Autom%C3%A1tico%20Energia%20Repara%C3%A7%C3%A3o%20Vendendo%20agora%20review%20unboxing%20testando",
+      "categorySlug": "pet",
+      "categoryName": "Pet Shop",
+      "tiktokUrl": "https://www.tiktok.com/search?q=Carregador%20de%20bateria%20automotivo%20inteligente%2012%20V%20-%20Display%20Digital%20Autom%C3%A1tico%20Energia%20Repara%C3%A7%C3%A3o%20Pet%20Shop%20review%20unboxing%20testando",
       "addedAt": "2026-08-08T14:28:46.765Z"
     },
     {
@@ -399,9 +477,9 @@
       "price": 20.49,
       "promoPrice": null,
       "productUrl": "https://s.shopee.com.br/8fRP219k7p",
-      "categorySlug": "vendendo-agora",
-      "categoryName": "Vendendo agora",
-      "tiktokUrl": "https://www.tiktok.com/search?q=%E3%80%90Fone%20De%20Ouvido%20Sem%20Fio%20Fone%20BluetoothTWS%20Compacto%20com%20Case%20%7C%20Som%20EstereoCompacto%20Tipo%20Airdots2%20Vendendo%20agora%20review%20unboxing%20testando",
+      "categorySlug": "pet",
+      "categoryName": "Pet Shop",
+      "tiktokUrl": "https://www.tiktok.com/search?q=%E3%80%90Fone%20De%20Ouvido%20Sem%20Fio%20Fone%20BluetoothTWS%20Compacto%20com%20Case%20%7C%20Som%20EstereoCompacto%20Tipo%20Airdots2%20Pet%20Shop%20review%20unboxing%20testando",
       "addedAt": "2026-08-08T14:28:46.765Z"
     },
     {
@@ -438,9 +516,9 @@
       "price": 117.99,
       "promoPrice": null,
       "productUrl": "https://s.shopee.com.br/9V0W1Y6ZR2",
-      "categorySlug": "vendendo-agora",
-      "categoryName": "Vendendo agora",
-      "tiktokUrl": "https://www.tiktok.com/search?q=Power%20Bank%20Solar%2050000mAh%20Carregador%20Port%C3%A1til%20Grande%20Capacidade%20USB%20com%20Cabo%20Universal%20Vendendo%20agora%20review%20unboxing%20testando",
+      "categorySlug": "pet",
+      "categoryName": "Pet Shop",
+      "tiktokUrl": "https://www.tiktok.com/search?q=Power%20Bank%20Solar%2050000mAh%20Carregador%20Port%C3%A1til%20Grande%20Capacidade%20USB%20com%20Cabo%20Universal%20Pet%20Shop%20review%20unboxing%20testando",
       "addedAt": "2026-08-08T14:28:46.765Z"
     },
     {
@@ -581,9 +659,9 @@
       "price": 99.98,
       "promoPrice": null,
       "productUrl": "https://s.shopee.com.br/5fnnSVLADT",
-      "categorySlug": "vendendo-agora",
-      "categoryName": "Vendendo agora",
-      "tiktokUrl": "https://www.tiktok.com/search?q=M%C3%A1quina%20de%20cortar%20cabelo%20el%C3%A9trica%20KEMEI%20KM-2299%20Cortador%20Vendendo%20agora%20review%20unboxing%20testando",
+      "categorySlug": "pet",
+      "categoryName": "Pet Shop",
+      "tiktokUrl": "https://www.tiktok.com/search?q=M%C3%A1quina%20de%20cortar%20cabelo%20el%C3%A9trica%20KEMEI%20KM-2299%20Cortador%20Pet%20Shop%20review%20unboxing%20testando",
       "addedAt": "2026-08-08T14:28:46.765Z"
     },
     {
@@ -854,9 +932,9 @@
       "price": 29.94,
       "promoPrice": null,
       "productUrl": "https://s.shopee.com.br/50Y6fHNhZg",
-      "categorySlug": "vendendo-agora",
-      "categoryName": "Vendendo agora",
-      "tiktokUrl": "https://www.tiktok.com/search?q=CARREGADOR%20PORT%C3%81TIL%20POWER%20BANK%20UNIVERSAL%2010.000MAH%20E%205.000MAH%20Vendendo%20agora%20review%20unboxing%20testando",
+      "categorySlug": "pet",
+      "categoryName": "Pet Shop",
+      "tiktokUrl": "https://www.tiktok.com/search?q=CARREGADOR%20PORT%C3%81TIL%20POWER%20BANK%20UNIVERSAL%2010.000MAH%20E%205.000MAH%20Pet%20Shop%20review%20unboxing%20testando",
       "addedAt": "2026-08-08T14:28:46.765Z"
     },
     {
@@ -4101,7 +4179,7 @@
       "sourceId": "e66f494e3390647a",
       "title": "Fone Bluetooth Sem Fio De Ouvido  P9 TWS Macaron Headphone Fone de Ouvido  Envio Imediato",
       "imageUrl": "https://cf.shopee.com.br/file/br-11134207-7r98o-lomqjeb9ouk2cc",
-      "price": 22.99,
+      "price": 21.79,
       "promoPrice": null,
       "productUrl": "https://s.shopee.com.br/9fJwAec8AM",
       "categorySlug": "brinquedos",
@@ -4478,7 +4556,7 @@
       "sourceId": "13bf5b9d2f001104",
       "title": "05 Potes de Vidro Hermético Transparente Tampa Bambu Porta Alimentos",
       "imageUrl": "https://cf.shopee.com.br/file/br-11134207-820m1-mo9xlkk1v092b8",
-      "price": 59.9,
+      "price": 74.9,
       "promoPrice": null,
       "productUrl": "https://s.shopee.com.br/4fvGDSqhJ5",
       "categorySlug": "brinquedos",
@@ -4725,7 +4803,7 @@
       "sourceId": "4742231cf5865336",
       "title": "Caneca Misturadora Automática Elétrica USB Bateria Recarregável Mixer Café 380ml",
       "imageUrl": "https://cf.shopee.com.br/file/br-11134207-81zts-mktlcixqn18h4e",
-      "price": 36.88,
+      "price": 35.78,
       "promoPrice": null,
       "productUrl": "https://s.shopee.com.br/1VyERe2kjm",
       "categorySlug": "brinquedos",
@@ -15973,9 +16051,9 @@
       "price": 67.39,
       "promoPrice": null,
       "productUrl": "https://s.shopee.com.br/BSpilyEsK",
-      "categorySlug": "vendendo-agora",
-      "categoryName": "Vendendo agora",
-      "tiktokUrl": "https://www.tiktok.com/search?q=Mini%20Compressor%20de%20Ar%20Portatil%20Recarregav%C3%A9l%20Digital%20USB%20Calibrador%20Pneu%20Env%20io%20Imediato%20Vendendo%20agora%20review%20unboxing%20testando",
+      "categorySlug": "pet",
+      "categoryName": "Pet Shop",
+      "tiktokUrl": "https://www.tiktok.com/search?q=Mini%20Compressor%20de%20Ar%20Portatil%20Recarregav%C3%A9l%20Digital%20USB%20Calibrador%20Pneu%20Env%20io%20Imediato%20Pet%20Shop%20review%20unboxing%20testando",
       "addedAt": "2026-08-07T20:36:42.041Z"
     },
     {
@@ -24839,9 +24917,9 @@
       "price": 16.2,
       "promoPrice": null,
       "productUrl": "https://s.shopee.com.br/9zwkmlEocH",
-      "categorySlug": "infantis",
-      "categoryName": "Infantis",
-      "tiktokUrl": "https://www.tiktok.com/search?q=2%20Porta%20Tudo%20Organizador%20Para%20Brinquedo%20E%20Enxovais%20Caixa%20Ba%C3%BA%20Quarto%20Infantil%20Infantis%20review%20unboxing%20testando",
+      "categorySlug": "casa",
+      "categoryName": "Casa & Decoração",
+      "tiktokUrl": "https://www.tiktok.com/search?q=2%20Porta%20Tudo%20Organizador%20Para%20Brinquedo%20E%20Enxovais%20Caixa%20Ba%C3%BA%20Quarto%20Infantil%20Casa%20%26%20Decora%C3%A7%C3%A3o%20review%20unboxing%20testando",
       "addedAt": "2026-08-07T10:53:01.438Z"
     },
     {
@@ -24852,9 +24930,9 @@
       "price": 32.4,
       "promoPrice": null,
       "productUrl": "https://s.shopee.com.br/AUt1NgCubO",
-      "categorySlug": "infantis",
-      "categoryName": "Infantis",
-      "tiktokUrl": "https://www.tiktok.com/search?q=5%20Porta%20Tudo%20Organizador%20Para%20Brinquedo%20E%20Enxovais%20Caixa%20Ba%C3%BA%20Quarto%20Infantil%20Infantis%20review%20unboxing%20testando",
+      "categorySlug": "casa",
+      "categoryName": "Casa & Decoração",
+      "tiktokUrl": "https://www.tiktok.com/search?q=5%20Porta%20Tudo%20Organizador%20Para%20Brinquedo%20E%20Enxovais%20Caixa%20Ba%C3%BA%20Quarto%20Infantil%20Casa%20%26%20Decora%C3%A7%C3%A3o%20review%20unboxing%20testando",
       "addedAt": "2026-08-07T10:53:01.438Z"
     },
     {
@@ -155921,84 +155999,6 @@
       "categorySlug": "brinquedos",
       "categoryName": "Brinquedos & Hobbies",
       "tiktokUrl": "https://www.tiktok.com/search?q=Jogo%20Panelas%2013%20Pe%C3%A7as%20Antiaderente%20Conjunto%20Kit%20Frigideira%20Ca%C3%A7arola%20Fervedor%20Cozinha%20Completa%20Brinquedos%20%26%20Hobbies%20review%20unboxing%20testando",
-      "addedAt": "2026-08-04T04:10:35.414Z"
-    },
-    {
-      "source": "shopee_affiliate",
-      "sourceId": "ae00c19936eaa175",
-      "title": "Cadeira de Escritório Ergonômica Diretor Viena com Tela Mesh e Apoio de Cabeça - Oficial Webshop",
-      "imageUrl": "https://cf.shopee.com.br/file/br-11134207-81z1k-mh6pzclgqosgeb",
-      "price": 241.07,
-      "promoPrice": null,
-      "productUrl": "https://s.shopee.com.br/4LIIo2S1FJ",
-      "categorySlug": "brinquedos",
-      "categoryName": "Brinquedos & Hobbies",
-      "tiktokUrl": "https://www.tiktok.com/search?q=Cadeira%20de%20Escrit%C3%B3rio%20Ergon%C3%B4mica%20Diretor%20Viena%20com%20Tela%20Mesh%20e%20Apoio%20de%20Cabe%C3%A7a%20-%20Oficial%20Webshop%20Brinquedos%20%26%20Hobbies%20review%20unboxing%20testando",
-      "addedAt": "2026-08-04T04:10:35.414Z"
-    },
-    {
-      "source": "shopee_affiliate",
-      "sourceId": "a6d1afa7ff3c6fdc",
-      "title": "Lavadora de Alta Pressão Sem Fio Portátil Recarregável Carros e Jardins Pistola Lavajato Residêncial Bivolt",
-      "imageUrl": "https://cf.shopee.com.br/file/br-11134207-7r98o-mdagm6f5sni9d0",
-      "price": 79.89,
-      "promoPrice": null,
-      "productUrl": "https://s.shopee.com.br/4AysbjSeaI",
-      "categorySlug": "brinquedos",
-      "categoryName": "Brinquedos & Hobbies",
-      "tiktokUrl": "https://www.tiktok.com/search?q=Lavadora%20de%20Alta%20Press%C3%A3o%20Sem%20Fio%20Port%C3%A1til%20Recarreg%C3%A1vel%20Carros%20e%20Jardins%20Pistola%20Lavajato%20Resid%C3%AAncial%20Bivolt%20Brinquedos%20%26%20Hobbies%20review%20unboxing%20testando",
-      "addedAt": "2026-08-04T04:10:35.414Z"
-    },
-    {
-      "source": "shopee_affiliate",
-      "sourceId": "7973eca1dc20c04b",
-      "title": "Caneca Personalizada Flork Presente Dia dos Pais Diversos Modelos  Canecas Divertidas de Porcelana",
-      "imageUrl": "https://cf.shopee.com.br/file/br-11134207-820lb-mqcqaloc8tmr43",
-      "price": 29.92,
-      "promoPrice": null,
-      "productUrl": "https://s.shopee.com.br/40fSPQTHvH",
-      "categorySlug": "brinquedos",
-      "categoryName": "Brinquedos & Hobbies",
-      "tiktokUrl": "https://www.tiktok.com/search?q=Caneca%20Personalizada%20Flork%20Presente%20Dia%20dos%20Pais%20Diversos%20Modelos%20%20Canecas%20Divertidas%20de%20Porcelana%20Brinquedos%20%26%20Hobbies%20review%20unboxing%20testando",
-      "addedAt": "2026-08-04T04:10:35.414Z"
-    },
-    {
-      "source": "shopee_affiliate",
-      "sourceId": "16d50249e3003acd",
-      "title": "Gravação De Espelho Retrovisor Lente Dupla De 64GB Monitoramento De Carro HD 1080P Dianteira E Traseira",
-      "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-824hf-me02r3ndjvnkcf",
-      "price": 99.99,
-      "promoPrice": null,
-      "productUrl": "https://s.shopee.com.br/5ArPnZOqYW",
-      "categorySlug": "brinquedos",
-      "categoryName": "Brinquedos & Hobbies",
-      "tiktokUrl": "https://www.tiktok.com/search?q=Grava%C3%A7%C3%A3o%20De%20Espelho%20Retrovisor%20Lente%20Dupla%20De%2064GB%20Monitoramento%20De%20Carro%20HD%201080P%20Dianteira%20E%20Traseira%20Brinquedos%20%26%20Hobbies%20review%20unboxing%20testando",
-      "addedAt": "2026-08-04T04:10:35.414Z"
-    },
-    {
-      "source": "shopee_affiliate",
-      "sourceId": "5f5dd6a5478864ae",
-      "title": "Cadeira de jogo profissional Ergonomia Altura ajustável Cadeira de esportes eletrônicos F19",
-      "imageUrl": "https://cf.shopee.com.br/file/br-11134207-81ztc-mk4o33jzfawyea",
-      "price": 500.99,
-      "promoPrice": null,
-      "productUrl": "https://s.shopee.com.br/50XzbGPTtV",
-      "categorySlug": "brinquedos",
-      "categoryName": "Brinquedos & Hobbies",
-      "tiktokUrl": "https://www.tiktok.com/search?q=Cadeira%20de%20jogo%20profissional%20Ergonomia%20Altura%20ajust%C3%A1vel%20Cadeira%20de%20esportes%20eletr%C3%B4nicos%20F19%20Brinquedos%20%26%20Hobbies%20review%20unboxing%20testando",
-      "addedAt": "2026-08-04T04:10:35.414Z"
-    },
-    {
-      "source": "shopee_affiliate",
-      "sourceId": "132456d3513e692d",
-      "title": "21v parafusadeira furadeira impacto elétrica Furadeira bivolt Sem Fio 2 Baterias 24 Acessórieos",
-      "imageUrl": "https://cf.shopee.com.br/file/br-11134207-7r98o-m8vrj0ma19ch68",
-      "price": 112.58,
-      "promoPrice": null,
-      "productUrl": "https://s.shopee.com.br/4qEZOxQ7EU",
-      "categorySlug": "brinquedos",
-      "categoryName": "Brinquedos & Hobbies",
-      "tiktokUrl": "https://www.tiktok.com/search?q=21v%20parafusadeira%20furadeira%20impacto%20el%C3%A9trica%20Furadeira%20bivolt%20Sem%20Fio%202%20Baterias%2024%20Acess%C3%B3rieos%20Brinquedos%20%26%20Hobbies%20review%20unboxing%20testando",
       "addedAt": "2026-08-04T04:10:35.414Z"
     }
   ]
