@@ -1,6 +1,19 @@
 {
-  "updatedAt": "2026-08-08 15:26 UTC",
+  "updatedAt": "2026-08-08 16:28 UTC",
   "items": [
+    {
+      "source": "shopee_affiliate",
+      "sourceId": "12230ab0de52d516",
+      "title": "Sérum Facial Profuse 8D Hyalu+ com 50ml",
+      "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-7rbll-loo70dejeg1z4f",
+      "price": 164.9,
+      "promoPrice": null,
+      "productUrl": "https://s.shopee.com.br/8fRPAEbWYm",
+      "categorySlug": "beleza",
+      "categoryName": "Beleza",
+      "tiktokUrl": "https://www.tiktok.com/search?q=S%C3%A9rum%20Facial%20Profuse%208D%20Hyalu%2B%20com%2050ml%20Beleza%20review%20unboxing%20testando",
+      "addedAt": "2026-08-08T16:28:25.717Z"
+    },
     {
       "source": "shopee_affiliate",
       "sourceId": "bb2d05bfce176fa2",
@@ -4647,7 +4660,7 @@
       "sourceId": "40b731ab01c73b41",
       "title": "Eudora Siàge Pro Cronology",
       "imageUrl": "https://cf.shopee.com.br/file/br-11134207-7r98o-mcb860z8fk682c",
-      "price": 69.99,
+      "price": 94.99,
       "promoPrice": null,
       "productUrl": "https://s.shopee.com.br/2LXLRAza2r",
       "categorySlug": "brinquedos",
@@ -50953,7 +50966,7 @@
       "sourceId": "21a4367ebe6fd8b7",
       "title": "Piu Piu Pelúcia Looney Tunes Boneco Infantil Amarelo com 30cm",
       "imageUrl": "https://cf.shopee.com.br/file/br-11134207-81z1k-mhul4rguqzgm66",
-      "price": 55.99,
+      "price": 48.16,
       "promoPrice": null,
       "productUrl": "https://s.shopee.com.br/AUt0ha6snx",
       "categorySlug": "infantis",
@@ -155986,19 +155999,6 @@
       "categorySlug": "brinquedos",
       "categoryName": "Brinquedos & Hobbies",
       "tiktokUrl": "https://www.tiktok.com/search?q=21v%20parafusadeira%20furadeira%20impacto%20el%C3%A9trica%20Furadeira%20bivolt%20Sem%20Fio%202%20Baterias%2024%20Acess%C3%B3rieos%20Brinquedos%20%26%20Hobbies%20review%20unboxing%20testando",
-      "addedAt": "2026-08-04T04:10:35.414Z"
-    },
-    {
-      "source": "shopee_affiliate",
-      "sourceId": "86bb184cb736ba12",
-      "title": "Sanduicheira Grill Antiaderente Black kian 127V e 220V",
-      "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-821d2-mgvm0myjchsdf4",
-      "price": 74.9,
-      "promoPrice": null,
-      "productUrl": "https://s.shopee.com.br/4fv9CeQkZT",
-      "categorySlug": "brinquedos",
-      "categoryName": "Brinquedos & Hobbies",
-      "tiktokUrl": "https://www.tiktok.com/search?q=Sanduicheira%20Grill%20Antiaderente%20Black%20kian%20127V%20e%20220V%20Brinquedos%20%26%20Hobbies%20review%20unboxing%20testando",
       "addedAt": "2026-08-04T04:10:35.414Z"
     }
   ]
