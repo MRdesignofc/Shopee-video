@@ -1,6 +1,19 @@
 {
-  "updatedAt": "2026-08-17 15:22 UTC",
+  "updatedAt": "2026-08-17 16:23 UTC",
   "items": [
+    {
+      "source": "shopee_affiliate",
+      "sourceId": "23e74ee8a8c99ce4",
+      "title": "Ácido Kójico 5%  Gel Creme 30g",
+      "imageUrl": "https://cf.shopee.com.br/file/br-11134207-7r98o-lt44hg2eht8f3b",
+      "price": 28.64,
+      "promoPrice": null,
+      "productUrl": "https://s.shopee.com.br/7psWWK0jso",
+      "categorySlug": "beleza",
+      "categoryName": "Beleza",
+      "tiktokUrl": "https://www.tiktok.com/search?q=%C3%81cido%20K%C3%B3jico%205%25%20%20Gel%20Creme%2030g%20Beleza%20review%20unboxing%20testando",
+      "addedAt": "2026-08-17T16:22:38.325Z"
+    },
     {
       "source": "shopee_affiliate",
       "sourceId": "a0edcd4761bc561d",
@@ -155986,19 +155999,6 @@
       "categorySlug": "eletronicos",
       "categoryName": "Eletrônicos & Acessórios",
       "tiktokUrl": "https://www.tiktok.com/search?q=Fone%20De%20Ouvido%20Sem%20Fio%20Bluetooth%20Com%20Microfone%20e%20Radio%20Eletr%C3%B4nicos%20%26%20Acess%C3%B3rios%20review%20unboxing%20testando",
-      "addedAt": "2026-08-11T01:21:14.988Z"
-    },
-    {
-      "source": "shopee_affiliate",
-      "sourceId": "ec1e92561538675f",
-      "title": "Fone Headset Bluetooth Gatinho Amarelo Com LED Sem Fio",
-      "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-824h2-mfoclhvojc3ua7",
-      "price": 138.98,
-      "promoPrice": null,
-      "productUrl": "https://s.shopee.com.br/4LITmdvocZ",
-      "categorySlug": "eletronicos",
-      "categoryName": "Eletrônicos & Acessórios",
-      "tiktokUrl": "https://www.tiktok.com/search?q=Fone%20Headset%20Bluetooth%20Gatinho%20Amarelo%20Com%20LED%20Sem%20Fio%20Eletr%C3%B4nicos%20%26%20Acess%C3%B3rios%20review%20unboxing%20testando",
       "addedAt": "2026-08-11T01:21:14.988Z"
     }
   ]
