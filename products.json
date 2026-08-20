@@ -1,6 +1,19 @@
 {
-  "updatedAt": "2026-08-20 07:38 UTC",
+  "updatedAt": "2026-08-20 08:33 UTC",
   "items": [
+    {
+      "source": "shopee_affiliate",
+      "sourceId": "f38fd5c805097383",
+      "title": "Smartwatch ZW03 Tela 2.13\" Bluetooth Chamadas IP68 2 Pulseiras",
+      "imageUrl": "https://cf.shopee.com.br/file/sg-11134201-8259z-mrdarel2neo2a3",
+      "price": 343.2,
+      "promoPrice": null,
+      "productUrl": "https://s.shopee.com.br/6VNDCK4GdN",
+      "categorySlug": "eletronicos",
+      "categoryName": "Eletrônicos & Acessórios",
+      "tiktokUrl": "https://www.tiktok.com/search?q=Smartwatch%20ZW03%20Tela%202.13%22%20Bluetooth%20Chamadas%20IP68%202%20Pulseiras%20Eletr%C3%B4nicos%20%26%20Acess%C3%B3rios%20review%20unboxing%20testando",
+      "addedAt": "2026-08-20T08:33:27.787Z"
+    },
     {
       "source": "shopee_affiliate",
       "sourceId": "ed2d20c176d097ca",
@@ -5323,7 +5336,7 @@
       "sourceId": "922c157fa379e028",
       "title": "Kit Com 5 Organizador M- Pvc De Enxovais E Roupas Com Zíper. Armário Cômoda",
       "imageUrl": "https://cf.shopee.com.br/file/br-11134207-7r98o-mcm72jc75ycy4e",
-      "price": 37.6,
+      "price": 36.66,
       "promoPrice": null,
       "productUrl": "https://s.shopee.com.br/7KwJrucsPM",
       "categorySlug": "casa",
@@ -5609,7 +5622,7 @@
       "sourceId": "46581030d652688b",
       "title": "Kit 5 Saco Organizador Multiuso Embalagem Transparente Edredom Coberta Toalhas de Pvc e Ziper Preto Enxoval Guarda Roupa",
       "imageUrl": "https://cf.shopee.com.br/file/br-11134207-81z1k-merinzxgqigx32",
-      "price": 28.99,
+      "price": 26.99,
       "promoPrice": null,
       "productUrl": "https://s.shopee.com.br/8AVQrRZZAu",
       "categorySlug": "casa",
@@ -6064,7 +6077,7 @@
       "sourceId": "a92827ec26f1589d",
       "title": "Kit 5 Saco Organizador zíper Cobertor Casaco Guarda Roupa Anti-Poeira Anti-Umidade Multiuso 44 x 20 x 38",
       "imageUrl": "https://cf.shopee.com.br/file/br-11134207-820ll-mnx2m0em0zy821",
-      "price": 28.99,
+      "price": 26.99,
       "promoPrice": null,
       "productUrl": "https://s.shopee.com.br/19j8R4ek5",
       "categorySlug": "casa",
@@ -6077,7 +6090,7 @@
       "sourceId": "35ecdc6d5cc80281",
       "title": "Kit 5 Saco Organizador Pvc para Edredom e Cobertor com Zíper Preto Guarda-Roupa",
       "imageUrl": "https://cf.shopee.com.br/file/br-11134207-820ma-mnx2m0edy8ec1f",
-      "price": 28.99,
+      "price": 26.99,
       "promoPrice": null,
       "productUrl": "https://s.shopee.com.br/W5zjM2kjC",
       "categorySlug": "casa",
@@ -6168,7 +6181,7 @@
       "sourceId": "b5eb8449a59edeb7",
       "title": "Kit 3 Saco Organizador Closet Edredon Cobertor C/ Ziper",
       "imageUrl": "https://cf.shopee.com.br/file/br-11134201-23030-mlscpix8imov93",
-      "price": 20.77,
+      "price": 19.99,
       "promoPrice": null,
       "productUrl": "https://s.shopee.com.br/9KhOFaV7o1",
       "categorySlug": "casa",
@@ -155987,19 +156000,6 @@
       "categoryName": "Brinquedos & Hobbies",
       "tiktokUrl": "https://www.tiktok.com/search?q=46%20Pe%C3%A7as%20Verde%20Kit%20Chaves%20Jogo%20Catraca%20Revers%C3%ADvel%20Soquetes%20Maleta%20Promo%C3%A7%C3%A3o%20Brinquedos%20%26%20Hobbies%20review%20unboxing%20testando",
       "addedAt": "2026-08-14T01:30:27.789Z"
-    },
-    {
-      "source": "shopee_affiliate",
-      "sourceId": "3abf0f237ed32910",
-      "title": "Esmerilhadeira Profissional Elétrica 720W 115mm (4.5”) 11.500 RPM – Pró Euro",
-      "imageUrl": "https://cf.shopee.com.br/file/br-11134207-820m1-mmtcep50oxl3ab",
-      "price": 119.9,
-      "promoPrice": null,
-      "productUrl": "https://s.shopee.com.br/4fvOyYk6aY",
-      "categorySlug": "brinquedos",
-      "categoryName": "Brinquedos & Hobbies",
-      "tiktokUrl": "https://www.tiktok.com/search?q=Esmerilhadeira%20Profissional%20El%C3%A9trica%20720W%20115mm%20(4.5%E2%80%9D)%2011.500%20RPM%20%E2%80%93%20Pr%C3%B3%20Euro%20Brinquedos%20%26%20Hobbies%20review%20unboxing%20testando",
-      "addedAt": "2026-08-14T01:30:26.772Z"
     }
   ]
 }
