@@ -1,6 +1,19 @@
 {
-  "updatedAt": "2026-08-23 05:25 UTC",
+  "updatedAt": "2026-08-23 06:34 UTC",
   "items": [
+    {
+      "source": "shopee_affiliate",
+      "sourceId": "9d9ad8bedde0e86d",
+      "title": "Lápis de Olho Delineador Duo Pontas Branco e Preto - Vivai",
+      "imageUrl": "https://cf.shopee.com.br/file/br-11134207-81z1k-mh7pc61kiupx55",
+      "price": 9.97,
+      "promoPrice": null,
+      "productUrl": "https://s.shopee.com.br/1qbSIDdR7A",
+      "categorySlug": "beleza",
+      "categoryName": "Beleza",
+      "tiktokUrl": "https://www.tiktok.com/search?q=L%C3%A1pis%20de%20Olho%20Delineador%20Duo%20Pontas%20Branco%20e%20Preto%20-%20Vivai%20Beleza%20review%20unboxing%20testando",
+      "addedAt": "2026-08-23T06:34:03.115Z"
+    },
     {
       "source": "shopee_affiliate",
       "sourceId": "f3f93f10e4d4a7d2",
@@ -155986,19 +155999,6 @@
       "categorySlug": "beleza",
       "categoryName": "Beleza",
       "tiktokUrl": "https://www.tiktok.com/search?q=%E2%9C%A8%20Chronos%20Derma%20Creme%20Antissinais%20dia%20e%20Noite%20%E2%9C%A8%20Beleza%20review%20unboxing%20testando",
-      "addedAt": "2026-08-17T10:28:10.765Z"
-    },
-    {
-      "source": "shopee_affiliate",
-      "sourceId": "27a81936bcd478df",
-      "title": "Natura Chronos Sérum Noturno Antioleosidade e Poros 30ml",
-      "imageUrl": "https://cf.shopee.com.br/file/br-11134207-81z1k-me78xksdu29t8a",
-      "price": 120.99,
-      "promoPrice": null,
-      "productUrl": "https://s.shopee.com.br/5LBB9Nuz6h",
-      "categorySlug": "beleza",
-      "categoryName": "Beleza",
-      "tiktokUrl": "https://www.tiktok.com/search?q=Natura%20Chronos%20S%C3%A9rum%20Noturno%20Antioleosidade%20e%20Poros%2030ml%20Beleza%20review%20unboxing%20testando",
       "addedAt": "2026-08-17T10:28:10.765Z"
     }
   ]
